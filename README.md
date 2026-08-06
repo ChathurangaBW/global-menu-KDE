@@ -15,11 +15,11 @@ A focused Plasma 6 panel applet that shows only the active application's exporte
 - Plasma 6 C++/QML applet.
 - Active-window tracking through `LibTaskManager`.
 - Canonical dbusmenu layout import and action activation.
-- Native `QMenu` submenus, disabled actions, check items, exclusive radio groups, icons, and exported shortcuts.
+- Native `QMenu` submenus, disabled actions, check items, exclusive radio groups, icons, exported shortcuts, and mnemonics.
 - `AboutToShow`, `opened`, `closed`, and `clicked` dbusmenu lifecycle handling.
 - Automatic reacquisition of `org.kde.kappmenuview` if KDE's stock Global Menu widget is removed.
 - Complete hidden-state behavior when no exported menu is available.
-- Static QA, Qt unit tests, and Plasma 6 compile/test workflow configuration.
+- Static QA, Qt unit tests, Plasma 6 release compilation, staged installation, and prebuilt artifact generation in CI.
 
 ## Target environment
 
@@ -28,9 +28,23 @@ A focused Plasma 6 panel applet that shows only the active application's exporte
 - KDE Frameworks 6
 - Wayland or X11
 
-The build requires development packages for Qt Core/DBus/Gui/Quick/Widgets/Test, ECM, KF6 CoreAddons/I18n/WindowSystem, LibPlasma, and Plasma Workspace's `LibTaskManager`.
+The source build requires development packages for Qt Core/DBus/Gui/Quick/Widgets/Test, ECM, KF6 Config/CoreAddons/I18n/WindowSystem, LibPlasma, and Plasma Workspace's `LibTaskManager`.
 
-## Build and test
+## Prebuilt CI artifact
+
+Each successful CI run publishes `global-menu-kde-plasma6`, containing an Arch Linux x86-64 build of the applet plus installation helpers.
+
+1. Download and extract the `global-menu-kde-plasma6` artifact from the latest successful GitHub Actions run.
+2. Extract `global-menu-kde-plasma6.tar.gz`.
+3. Run:
+
+```bash
+bash ./install.sh
+```
+
+To remove that installation, run `bash ./uninstall.sh` from the extracted directory. The prebuilt archive is intended for current Plasma 6 systems with compatible Qt, KDE Frameworks, Plasma, and `LibTaskManager` shared-library versions.
+
+## Build and test from source
 
 ```bash
 cmake -S . -B build \
@@ -40,13 +54,13 @@ cmake --build build --parallel
 ctest --test-dir build --output-on-failure
 ```
 
-## Install for the current user
+## Install from source for the current user
 
 ```bash
 bash ./scripts/install-user.sh
 ```
 
-The installer:
+The source installer:
 
 1. Configures and builds the applet.
 2. Runs the Qt test suite.
@@ -54,9 +68,9 @@ The installer:
 4. Finds the installed Qt plugin root from CMake's install manifest.
 5. Creates `~/.config/plasma-workspace/env/global-menu-kde.sh` so Plasma can discover the compiled applet plugin.
 
-After installation, **log out and log back in**. Then add **Global Menu KDE** to a panel and remove KDE's stock Global Menu widget if it is present.
+After either installation method, **log out and log back in**. Then add **Global Menu KDE** to a panel and remove KDE's stock Global Menu widget if it is present.
 
-## Uninstall
+## Uninstall a source build
 
 ```bash
 bash ./scripts/uninstall-user.sh
