@@ -9,21 +9,24 @@
 - [x] Canonical dbusmenu `GetLayout`, `AboutToShow`, and `Event` integration.
 - [x] dbusmenu `opened`, `closed`, and `clicked` lifecycle events.
 - [x] Native `QMenu` popup rendering and direct top-level action activation.
-- [x] Disabled actions, check items, contiguous exclusive radio groups, icons, and exported keyboard shortcuts.
+- [x] Disabled actions, check items, contiguous exclusive radio groups, icons, exported keyboard shortcuts, and mnemonics.
 - [x] Top-level menu headings only.
 - [x] Complete hiding when no active application menu is exported.
 - [x] No persistent placeholder, Apple menu, search, clock, workspace controls, or synthetic fallback.
 - [x] User install and uninstall scripts with Plasma session plugin-path setup.
 - [x] Static source and packaging checks.
 - [x] Qt shortcut-translation unit tests.
-- [x] Plasma 6 CI configure and compilation against current Arch Linux packages.
+- [x] Plasma 6 CI configure and release compilation against current Arch Linux packages.
 - [x] Plasma 6 CI `ctest` execution.
+- [x] Staged CMake installation in CI.
+- [x] Installable CI artifact with prebuilt install/uninstall helpers.
+- [x] Artifact structure, ELF metadata, dependency list, install, environment-hook, and uninstall smoke tests.
 
 ## Desktop QA still required
 
-- [ ] Build against the target distribution's Plasma 6 development packages.
-- [ ] Run the Qt test suite on the target distribution.
-- [ ] Install into `~/.local`, log out, and log back in.
+- [ ] Build against the target distribution's Plasma 6 development packages, unless using the compatible prebuilt artifact.
+- [ ] Run the Qt test suite on the target distribution when building from source.
+- [ ] Install into `~/.local`, log out, and log back in on a real Plasma session.
 - [ ] Confirm the widget has zero panel width on the desktop.
 - [ ] Confirm the widget has zero panel width for Firefox/Electron apps without an export.
 - [ ] Confirm Dolphin shows its exported headings and each command executes.
@@ -40,4 +43,4 @@
 
 - [ ] Process `ItemsPropertiesUpdated` incrementally instead of refreshing the complete layout.
 - [ ] Add an automated fake dbusmenu exporter for end-to-end protocol tests.
-- [ ] Package a signed release archive.
+- [ ] Publish a signed release after desktop QA.
