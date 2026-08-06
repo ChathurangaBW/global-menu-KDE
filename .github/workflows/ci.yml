@@ -47,6 +47,11 @@ jobs:
         run: ctest --test-dir build --output-on-failure
       - name: Install into staging prefix
         run: cmake --install build --prefix "$GITHUB_WORKSPACE/stage"
+      - name: Add artifact installation helpers
+        run: |
+          install -m0755 scripts/install-prebuilt.sh stage/install.sh
+          install -m0755 scripts/uninstall-prebuilt.sh stage/uninstall.sh
+          install -m0644 README.md stage/README.md
       - name: Package staged installation
         run: tar -C stage -czf global-menu-kde-plasma6.tar.gz .
       - name: Upload installable artifact
