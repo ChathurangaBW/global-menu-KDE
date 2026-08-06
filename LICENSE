@@ -1,0 +1,10 @@
+Global Menu KDE is licensed under the GNU General Public License, version 2 or later.
+
+This repository also contains a small D-Bus serialization component derived from
+Canonical's dbusmenu-qt implementation and licensed under the GNU Lesser General
+Public License, version 2 or later. Individual source files carry SPDX license
+identifiers specifying the applicable license.
+
+The full license texts are available from the SPDX license list:
+- GPL-2.0-or-later
+- LGPL-2.0-or-later
