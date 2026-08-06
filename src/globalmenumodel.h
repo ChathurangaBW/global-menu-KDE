@@ -15,6 +15,7 @@ class QAction;
 class QDBusInterface;
 class QDBusServiceWatcher;
 class QMenu;
+class GlobalMenuModelTest;
 
 namespace TaskManager
 {
@@ -56,6 +57,8 @@ private Q_SLOTS:
     void requestLayout();
 
 private:
+    friend class GlobalMenuModelTest;
+
     [[nodiscard]] static QVariant property(const DBusMenuLayoutItem &item, const QString &name);
     void setSource(const QString &serviceName, const QString &objectPath);
     void clearActions();
