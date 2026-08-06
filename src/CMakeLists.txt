@@ -8,6 +8,7 @@ plasma_add_applet(org.chathuranga.globalmenu
     CPP_SOURCES
         globalmenuapplet.cpp
         globalmenumodel.cpp
+        globalmenuproperty.cpp
         dbusmenutypes.cpp
     QML_ARGS DEPENDENCIES QtCore org.kde.plasma.core
 )
