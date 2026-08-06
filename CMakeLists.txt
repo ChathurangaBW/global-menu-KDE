@@ -17,7 +17,7 @@ include(FeatureSummary)
 include(CTest)
 
 find_package(Qt6 ${QT_MIN_VERSION} REQUIRED COMPONENTS Core DBus Gui Quick Widgets)
-find_package(KF6 ${KF6_MIN_VERSION} REQUIRED COMPONENTS CoreAddons I18n WindowSystem)
+find_package(KF6 ${KF6_MIN_VERSION} REQUIRED COMPONENTS Config CoreAddons I18n WindowSystem)
 find_package(Plasma ${PLASMA_MIN_VERSION} REQUIRED)
 find_package(LibTaskManager REQUIRED CONFIG)
 
