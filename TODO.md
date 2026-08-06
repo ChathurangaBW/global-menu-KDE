@@ -16,7 +16,8 @@
 - [x] User install and uninstall scripts with Plasma session plugin-path setup.
 - [x] Static source and packaging checks.
 - [x] Qt shortcut-translation unit tests.
-- [x] Plasma 6 compile and `ctest` workflow configuration using current Arch Linux packages.
+- [x] Plasma 6 CI configure and compilation against current Arch Linux packages.
+- [x] Plasma 6 CI `ctest` execution.
 
 ## Desktop QA still required
 
@@ -26,7 +27,7 @@
 - [ ] Confirm the widget has zero panel width on the desktop.
 - [ ] Confirm the widget has zero panel width for Firefox/Electron apps without an export.
 - [ ] Confirm Dolphin shows its exported headings and each command executes.
-- [ ] Confirm Kate/KWrite submenu, disabled item, check item, radio item, icon, and shortcut behavior.
+- [ ] Confirm Kate/KWrite submenu, disabled item, check item, radio item, icon, shortcut, and mnemonic behavior.
 - [ ] Confirm hover switching between headings while a popup is open.
 - [ ] Confirm Left/Right keyboard navigation between headings.
 - [ ] Confirm correct popup placement on top, bottom, left, and right panels.
