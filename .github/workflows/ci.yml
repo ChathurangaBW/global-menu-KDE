@@ -40,8 +40,19 @@ jobs:
       - name: Trust checkout directory
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - name: Configure
-        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON
       - name: Build
         run: cmake --build build --parallel
       - name: Test
         run: ctest --test-dir build --output-on-failure
+      - name: Install into staging prefix
+        run: cmake --install build --prefix "$GITHUB_WORKSPACE/stage"
+      - name: Package staged installation
+        run: tar -C stage -czf global-menu-kde-plasma6.tar.gz .
+      - name: Upload installable artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: global-menu-kde-plasma6
+          path: global-menu-kde-plasma6.tar.gz
+          if-no-files-found: error
+          retention-days: 14
