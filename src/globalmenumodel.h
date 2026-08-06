@@ -56,6 +56,7 @@ private Q_SLOTS:
     void requestLayout();
 
 private:
+    [[nodiscard]] static QVariant property(const DBusMenuLayoutItem &item, const QString &name);
     void setSource(const QString &serviceName, const QString &objectPath);
     void clearActions();
     void rebuildActions(const DBusMenuLayoutItem &root);
