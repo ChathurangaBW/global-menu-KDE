@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  static-qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install QA tools
+        if: ${{ hashFiles('scripts/qa.sh') != '' }}
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+      - name: Run static QA
+        if: ${{ hashFiles('scripts/qa.sh') != '' }}
+        run: bash ./scripts/qa.sh --static
+      - name: No source yet
+        if: ${{ hashFiles('scripts/qa.sh') == '' }}
+        run: echo "Source validation starts when the implementation branch is merged or opened as a pull request."
+
+  plasma6-build:
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Plasma 6 build dependencies
+        if: ${{ hashFiles('CMakeLists.txt') != '' }}
+        run: >-
+          pacman -Syu --noconfirm
+          git base-devel cmake ninja extra-cmake-modules
+          qt6-base qt6-declarative
+          kcoreaddons ki18n kwindowsystem
+          libplasma plasma-workspace
+      - name: Configure
+        if: ${{ hashFiles('CMakeLists.txt') != '' }}
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON
+      - name: Build
+        if: ${{ hashFiles('CMakeLists.txt') != '' }}
+        run: cmake --build build --parallel
+      - name: Test
+        if: ${{ hashFiles('CMakeLists.txt') != '' }}
+        run: ctest --test-dir build --output-on-failure
+      - name: No source yet
+        if: ${{ hashFiles('CMakeLists.txt') == '' }}
+        run: echo "The Plasma build starts when source files are present."
