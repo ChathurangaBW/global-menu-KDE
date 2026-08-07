@@ -1,6 +1,6 @@
-# QA and release validation
+# QA validation
 
-The project deliberately separates normal development CI from the final production-release gate.
+Global Menu KDE uses one rolling source-install path. There is no distro-package release gate: the important contract is that the exact repository state builds, tests, installs, is discovered by Plasma without plugin-path hacks, and can be removed cleanly.
 
 ## Functional contract
 
@@ -12,28 +12,35 @@ A build is not considered correct unless all of these states work:
 4. No second panel, standalone bar, Apple menu, clock, search field, workspace controls, or unrelated status controls are created by this applet.
 5. Desktop fallback submenu actions actually execute; rendering a submenu without action dispatch is a failure.
 
-## Automated tests
+## Automated CI contract
 
-The repository test suite covers:
+The repository CI covers:
 
 - construction of the desktop fallback model;
 - fallback menu headings and action structure;
-- fallback → application menu → fallback transition over a private session D-Bus;
+- fallback → application menu → fallback transition over D-Bus;
 - KDE dbusmenu importer interaction;
 - direct actions and submenus from a fake exporter;
-- Release build and CTest execution;
+- repeated application-menu lifecycle runs;
+- Release build and full CTest execution;
 - staged `/usr` installation layout;
+- unresolved ELF dependency rejection;
 - native Plasma plugin discovery with `QT_PLUGIN_PATH` unset;
 - headless `plasmawindowed` loading;
-- installer/uninstaller shell validation;
-- sanitizer and repeated integration runs in the production gate.
+- Bash syntax and ShellCheck validation for the installer scripts;
+- `install.sh --help` CLI validation;
+- end-to-end `install.sh --no-deps` execution as a non-root desktop user;
+- persistent uninstall-manifest creation;
+- `global-menu-kde-uninstall` removal verification.
 
-## Manual desktop matrix before a stable release
+The staged smoke test may temporarily set `QT_PLUGIN_PATH` only to point `plasmawindowed` at an uninstalled CI staging tree. The system-install smoke explicitly unsets it and verifies native discovery. The user-facing installer never creates a plugin-path override.
 
-Automated headless loading does not replace real Plasma interaction. A final stable release should be checked on representative systems for:
+## Real desktop matrix
+
+Automated headless loading does not replace real Plasma interaction. Representative manual checks include:
 
 - KDE neon / current Plasma 6 Wayland session;
-- at least one X11 Plasma session when the target distribution still supports it;
+- at least one X11 Plasma session where the target distribution still supports it;
 - horizontal top/bottom panels;
 - vertical left/right panels where Global Menu is supported;
 - direct drag from Widget Explorer into an existing panel;
@@ -45,21 +52,13 @@ Automated headless loading does not replace real Plasma interaction. A final sta
 - RTL layout;
 - common panel heights and HiDPI scaling.
 
-## Package release gate
+A manual test should record the exact commit, distribution, Plasma version, display protocol, and installation command used.
 
-Release assets should be published only when their own package jobs pass. A package job is expected to:
+## Distribution portability
 
-1. build the exact release source;
-2. run tests;
-3. create the native package;
-4. inspect package metadata;
-5. install it into the target environment;
-6. verify ELF dependencies do not contain unresolved libraries;
-7. verify Plasma discovers the applet with `QT_PLUGIN_PATH` unset;
-8. smoke-load the installed applet;
-9. uninstall the package and verify the plugin is removed.
+The installer is a source portability layer, not a universal prebuilt binary. `install.sh` contains dependency-name mappings for `apt`, `dnf`, `pacman`, and `zypper`; other Plasma 6 distributions can use `--no-deps` after supplying the required development packages.
 
-A GitHub Release with missing or failed package assets is not considered a completed production release.
+A distro/architecture is not claimed as validated merely because another distro's binary package would have worked there. The host build is the compatibility boundary.
 
 ## Reporting a failure
 
@@ -67,9 +66,10 @@ For a useful bug report, include:
 
 - distribution and exact Plasma version;
 - Wayland or X11;
-- installation method (`.deb`, `.rpm`, Arch package, source);
+- CPU architecture;
+- whether dependencies were installed automatically or with `--no-deps`;
 - whether the applet can be dragged directly from Widget Explorer to the panel;
 - whether it survives logout/login or reboot;
 - the active application involved;
-- terminal output from the installer/build if relevant;
+- terminal output from `install.sh` if relevant;
 - a screenshot or short screen recording for layout/interaction problems.

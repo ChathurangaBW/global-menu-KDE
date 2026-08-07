@@ -20,12 +20,12 @@ jobs:
   plasma6:
     runs-on: ubuntu-latest
     container: archlinux:latest
-    timeout-minutes: 35
+    timeout-minutes: 45
     steps:
       - name: Install Plasma 6 build/runtime dependencies
         run: >-
           pacman -Syu --noconfirm
-          git base-devel shellcheck cmake ninja extra-cmake-modules
+          git base-devel sudo shellcheck cmake ninja extra-cmake-modules
           qt6-base qt6-declarative
           kconfig kcoreaddons ki18n kwindowsystem
           libplasma plasma-workspace xorg-server-xvfb dbus file
@@ -38,9 +38,12 @@ jobs:
       - name: Validate repository and installer scripts
         run: |
           git diff --check
-          bash -n scripts/install-system.sh scripts/uninstall-system.sh
-          shellcheck scripts/install-system.sh scripts/uninstall-system.sh
-          ! grep -Rq 'QT_PLUGIN_PATH.*global-menu-kde.sh\|export QT_PLUGIN_PATH' scripts README.md
+          bash -n install.sh scripts/*.sh
+          shellcheck install.sh scripts/*.sh
+          bash ./install.sh --help >/tmp/global-menu-kde-install-help.txt
+          grep -Fq -- '--no-deps' /tmp/global-menu-kde-install-help.txt
+          grep -Fq -- '--uninstall' /tmp/global-menu-kde-install-help.txt
+          ! grep -Rq 'QT_PLUGIN_PATH.*global-menu-kde.sh\|export QT_PLUGIN_PATH' install.sh scripts README.md
 
       - name: Configure
         run: >-
@@ -54,6 +57,9 @@ jobs:
 
       - name: Test
         run: ctest --test-dir build --output-on-failure
+
+      - name: Stress application-menu lifecycle
+        run: ctest --test-dir build -R appmenumodel_test --repeat until-fail:20 --output-on-failure
 
       - name: Stage install
         run: DESTDIR="$GITHUB_WORKSPACE/stage" cmake --install build
@@ -117,3 +123,58 @@ jobs:
               ! grep -Eiq "failed to load|plugin.*not found|module .* is not installed|QQmlApplicationEngine failed" /tmp/plasmawindowed-system.log
             fi
           '
+
+      - name: End-to-end portable installer and uninstaller smoke
+        run: |
+          useradd -m installer
+          printf 'installer ALL=(ALL) NOPASSWD: ALL\n' >/etc/sudoers.d/global-menu-kde-ci
+          chmod 0440 /etc/sudoers.d/global-menu-kde-ci
+          chown -R installer:installer "$GITHUB_WORKSPACE"
+
+          echo 'Testing installer from a repository checkout...'
+          su - installer -c "cd '$GITHUB_WORKSPACE' && bash ./install.sh --no-deps"
+
+          test -s /var/lib/global-menu-kde/install_manifest.txt
+          test -x /usr/local/bin/global-menu-kde-uninstall
+          plugin=$(find /usr -type f -name 'org.chathuranga.globalmenu.so' -print -quit)
+          test -n "$plugin"
+          ldd "$plugin" | tee /tmp/installer-ldd.txt
+          ! grep -q 'not found' /tmp/installer-ldd.txt
+
+          unset QT_PLUGIN_PATH
+          export QT_QPA_PLATFORM=xcb
+          dbus-run-session -- xvfb-run -a bash -euo pipefail -c '
+            test -z "${QT_PLUGIN_PATH:-}"
+            if plasmawindowed --help 2>&1 | grep -q -- "--smoke-test"; then
+              plasmawindowed --smoke-test org.chathuranga.globalmenu
+            else
+              timeout 8s plasmawindowed org.chathuranga.globalmenu >/tmp/plasmawindowed-installer.log 2>&1 || code=$?
+              code=${code:-0}
+              if [[ $code -ne 0 && $code -ne 124 ]]; then
+                cat /tmp/plasmawindowed-installer.log
+                exit $code
+              fi
+              ! grep -Eiq "failed to load|plugin.*not found|module .* is not installed|QQmlApplicationEngine failed" /tmp/plasmawindowed-installer.log
+            fi
+          '
+
+          su - installer -c global-menu-kde-uninstall
+          ! find /usr -type f -name 'org.chathuranga.globalmenu.so' -print -quit | grep -q .
+          test ! -e /var/lib/global-menu-kde/install_manifest.txt
+          test ! -e /usr/local/bin/global-menu-kde-uninstall
+
+          echo 'Testing the streamed curl-style installer path...'
+          su - installer -c "GLOBAL_MENU_KDE_REPO='file://$GITHUB_WORKSPACE' GLOBAL_MENU_KDE_REF=HEAD bash -s -- --no-deps < '$GITHUB_WORKSPACE/install.sh'"
+
+          test -s /var/lib/global-menu-kde/install_manifest.txt
+          test -x /usr/local/bin/global-menu-kde-uninstall
+          plugin=$(find /usr -type f -name 'org.chathuranga.globalmenu.so' -print -quit)
+          test -n "$plugin"
+          ldd "$plugin" | tee /tmp/streamed-installer-ldd.txt
+          ! grep -q 'not found' /tmp/streamed-installer-ldd.txt
+          ! find /tmp -maxdepth 1 -type d -name 'global-menu-kde.*' -user installer -print -quit | grep -q .
+
+          su - installer -c global-menu-kde-uninstall
+          ! find /usr -type f -name 'org.chathuranga.globalmenu.so' -print -quit | grep -q .
+          test ! -e /var/lib/global-menu-kde/install_manifest.txt
+          test ! -e /usr/local/bin/global-menu-kde-uninstall

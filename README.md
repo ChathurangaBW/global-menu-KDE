@@ -71,32 +71,57 @@ The implementation is based directly on Plasma Workspace's native `applets/appme
 
 Read the detailed design: **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**.
 
-## Install on KDE neon / Ubuntu-family Plasma 6
+## Install
 
-Install the build dependencies:
+Global Menu KDE is distributed as a **portable Plasma 6 source installer**, not as a distro-specific binary package. The installer compiles the applet against the Qt/KF6/Plasma ABI already installed on the machine, runs the tests, audits the resulting plugin, and installs it into KDE's normal system plugin path under `/usr`.
+
+Run as your normal desktop user — **do not prefix the command with `sudo`**. The installer requests elevation only for dependency installation and the final system install.
+
+### One-command install
 
 ```bash
-sudo apt update
-sudo apt install \
-  git build-essential cmake ninja-build extra-cmake-modules \
-  qt6-base-dev qt6-declarative-dev \
-  libkf6config-dev libkf6i18n-dev libkf6windowsystem-dev \
-  libplasma-dev plasma-workspace-dev
+curl -fsSL https://raw.githubusercontent.com/ChathurangaBW/global-menu-KDE/main/install.sh | bash
 ```
 
-Clone and install into KDE's normal system plugin location:
+For an inspectable installation, clone first:
 
 ```bash
 git clone https://github.com/ChathurangaBW/global-menu-KDE.git
 cd global-menu-KDE
-bash ./scripts/install-system.sh
+bash ./install.sh
 ```
 
-Then log out of Plasma and back in once. Open **Edit Mode → Add Widgets**, search for **Global Menu KDE**, and drag it **directly into your existing panel**, exactly like KDE's native Global Menu widget.
+`install.sh` currently knows the build dependency names for `apt`, `dnf`, `pacman`, and `zypper`. On another Plasma 6 distribution, install the required Qt 6 / KF6 / Plasma development dependencies yourself and run:
 
-The current rewrite installs under `/usr`; it does **not** depend on the old `~/.local` + `QT_PLUGIN_PATH` development workaround.
+```bash
+bash ./install.sh --no-deps
+```
 
-For manual build, upgrades, legacy-cleanup notes, and uninstall instructions, see **[docs/INSTALL.md](docs/INSTALL.md)**.
+The installer requires KDE Plasma 6. It does not use a user-local `QT_PLUGIN_PATH` workaround and does not create a second panel.
+
+After the first binary-plugin installation, log out of Plasma and back in once. Then open **Edit Mode → Add Widgets**, search for **Global Menu KDE**, and drag it directly into the existing panel.
+
+### Uninstall
+
+Every CLI installation stores its exact CMake install manifest and installs a small uninstaller:
+
+```bash
+global-menu-kde-uninstall
+```
+
+If you still have the source checkout, this also works:
+
+```bash
+bash ./install.sh --uninstall
+```
+
+For dependency details, manual build commands, upgrades, and legacy-cleanup notes, see **[docs/INSTALL.md](docs/INSTALL.md)**.
+
+## Distribution model
+
+There is intentionally no `.deb`, `.rpm`, `.pkg.tar.zst`, or architecture-specific GitHub Release requirement. `main` is the install source. Building on the target machine avoids pretending that one Plasma C++ plugin binary is portable across incompatible Qt/KF6/Plasma ABIs.
+
+This is portable source installation, not universal binary compatibility. A supported machine still needs Plasma 6 and distro-provided development packages.
 
 ## Build
 
@@ -104,12 +129,6 @@ Build locally with one command:
 
 ```bash
 bash ./scripts/build.sh
-```
-
-To install it system-wide after a successful build:
-
-```bash
-bash ./scripts/install-system.sh
 ```
 
 To configure, build, and test manually:
@@ -121,56 +140,42 @@ cmake -S . -B build -G Ninja \
   -DBUILD_TESTING=ON
 cmake --build build --parallel
 ctest --test-dir build --output-on-failure
-sudo cmake --install build
-kbuildsycoca6 --noincremental
 ```
 
-## Release packages
+For normal installation, prefer `bash ./install.sh` so the system install, dependency audit, manifest persistence, legacy cleanup, and uninstaller are handled consistently.
 
-The production pipeline is designed to publish native packages only after package-specific install and Plasma smoke tests pass:
+## QA
 
-| Package | Distribution family | Architectures |
-| --- | --- | --- |
-| `.deb` | Debian / Ubuntu / KDE neon compatible Plasma 6 systems | `amd64`, `arm64` |
-| `.rpm` | Fedora / compatible Plasma 6 RPM systems | `x86_64`, `aarch64` |
-| `.pkg.tar.zst` | Official Arch Linux | `x86_64` |
-| `.tar.gz` | Source | architecture-independent |
-
-**Release integrity rule:** a GitHub Release is not considered production-ready until its downloadable assets and `SHA256SUMS` are actually present and their package jobs are green. If a release page is empty or incomplete, use the source installation above rather than treating that release as valid.
-
-## QA philosophy
-
-Rendering the menu is not enough. The release contract checks behavior across the full lifecycle:
+The CI contract checks more than rendering:
 
 - desktop fallback → real application menu → desktop fallback;
 - real dbusmenu direct actions and submenus;
 - desktop fallback action dispatch;
 - Release build + CTest;
-- sanitizer and repeated integration runs;
-- native `/usr` plugin installation;
+- repeated application-menu lifecycle testing;
+- staged `/usr` plugin layout and ELF dependency audit;
 - Plasma discovery with `QT_PLUGIN_PATH` unset;
 - `plasmawindowed` smoke loading;
-- package install/uninstall checks;
-- unresolved ELF dependency rejection;
-- native package validation before release publication.
+- ShellCheck and Bash syntax validation;
+- end-to-end `install.sh --no-deps` installation as a non-root user;
+- persistent uninstall manifest and CLI uninstall verification.
 
-The complete automated and manual matrix is documented in **[docs/QA.md](docs/QA.md)**.
+Automated headless tests do not replace a real Plasma panel test. See **[docs/QA.md](docs/QA.md)** for the manual desktop matrix.
 
 ## Repository layout
 
 ```text
 .
+├── install.sh               portable Plasma 6 source installer
 ├── src/
-│   ├── appmenuapplet.*       KDE native Global Menu controller
-│   ├── appmenumodel.*        KDE native model + fallback selection
-│   ├── desktopfallback.*     project-specific desktop fallback
-│   ├── main.xml              native Global Menu configuration
-│   └── qml/                  KDE native Global Menu presentation
+│   ├── appmenuapplet.*      KDE native Global Menu controller
+│   ├── appmenumodel.*       KDE native model + fallback selection
+│   ├── desktopfallback.*    project-specific desktop fallback
+│   ├── main.xml             native Global Menu configuration
+│   └── qml/                 KDE native Global Menu presentation
 ├── third_party/
-│   └── libdbusmenuqt/        KDE/Canonical private dbusmenu importer
+│   └── libdbusmenuqt/       KDE/Canonical private dbusmenu importer
 ├── tests/
-│   ├── desktopfallbacktest.cpp
-│   └── appmenumodeltest.cpp
 ├── scripts/
 │   ├── install-system.sh
 │   └── uninstall-system.sh
@@ -186,7 +191,7 @@ The complete automated and manual matrix is documented in **[docs/QA.md](docs/QA
 
 - **[Installation and upgrades](docs/INSTALL.md)**
 - **[Architecture](docs/ARCHITECTURE.md)**
-- **[QA and release validation](docs/QA.md)**
+- **[QA validation](docs/QA.md)**
 - **[Visual: panel state switching](docs/screenshots/panel-states.svg)**
 - **[Visual: desktop File menu](docs/screenshots/desktop-file-menu.svg)**
 
