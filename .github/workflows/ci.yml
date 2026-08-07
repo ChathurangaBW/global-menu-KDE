@@ -51,11 +51,18 @@ jobs:
         run: |
           QT_PLUGIN_PATH="$GITHUB_WORKSPACE/stage/lib/qt6/plugins" \
               bash ./scripts/smoke-plasmawindowed.sh org.chathuranga.globalmenu
-      - name: Add artifact installation helpers
+      - name: Add artifact installation helpers and docs
         run: |
           install -m0755 scripts/install-prebuilt.sh stage/install.sh
           install -m0755 scripts/uninstall-prebuilt.sh stage/uninstall.sh
           install -m0644 README.md stage/README.md
+          install -d stage/docs
+          install -m0644 \
+              docs/global-menu-preview.svg \
+              docs/INSTALL.md \
+              docs/QA.md \
+              docs/ARCHITECTURE.md \
+              stage/docs/
       - name: Package staged installation
         run: tar -C stage -czf global-menu-kde-plasma6.tar.gz .
       - name: Upload installable artifact
