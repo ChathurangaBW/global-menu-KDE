@@ -18,37 +18,43 @@ PlasmoidItem {
     id: root
 
     readonly property bool vertical: Plasmoid.formFactor === PlasmaCore.Types.Vertical
-    readonly property bool hasApplicationMenu: Plasmoid.model.menuAvailable
 
     preferredRepresentation: fullRepresentation
-    Plasmoid.constraintHints: Plasmoid.CanFillArea
-    Plasmoid.status: root.hasApplicationMenu
-        ? PlasmaCore.Types.ActiveStatus
-        : PlasmaCore.Types.HiddenStatus
+    Plasmoid.status: PlasmaCore.Types.ActiveStatus
 
-    // A non-exporting application must leave no placeholder or dead panel gap.
-    implicitWidth: root.hasApplicationMenu ? buttonGrid.implicitWidth : 0
-    implicitHeight: root.hasApplicationMenu ? buttonGrid.implicitHeight : 0
-    Layout.minimumWidth: root.implicitWidth
-    Layout.preferredWidth: root.implicitWidth
-    Layout.maximumWidth: root.implicitWidth
-    Layout.minimumHeight: root.implicitHeight
-    Layout.preferredHeight: root.implicitHeight
-    Layout.maximumHeight: root.implicitHeight
+    // This is a menu applet for an existing Plasma panel, not a second panel
+    // or standalone framed widget. The containment supplies the panel surface.
+    Plasmoid.backgroundHints: PlasmaCore.Types.NoBackground
+
+    implicitWidth: buttonGrid.implicitWidth
+    implicitHeight: buttonGrid.implicitHeight
+    Layout.minimumWidth: implicitWidth
+    Layout.preferredWidth: implicitWidth
+    Layout.maximumWidth: implicitWidth
+    Layout.minimumHeight: implicitHeight
+    Layout.preferredHeight: implicitHeight
+    Layout.maximumHeight: implicitHeight
+    Layout.fillWidth: false
+    Layout.fillHeight: false
 
     fullRepresentation: GridLayout {
         id: buttonGrid
 
-        visible: root.hasApplicationMenu
         LayoutMirroring.enabled: Application.layoutDirection === Qt.RightToLeft
         flow: root.vertical ? GridLayout.TopToBottom : GridLayout.LeftToRight
         rowSpacing: 0
         columnSpacing: 0
 
-        Layout.minimumWidth: visible ? implicitWidth : 0
-        Layout.maximumWidth: visible ? implicitWidth : 0
-        Layout.minimumHeight: visible ? implicitHeight : 0
-        Layout.maximumHeight: visible ? implicitHeight : 0
+        implicitWidth: childrenRect.width
+        implicitHeight: childrenRect.height
+        Layout.minimumWidth: implicitWidth
+        Layout.preferredWidth: implicitWidth
+        Layout.maximumWidth: implicitWidth
+        Layout.minimumHeight: implicitHeight
+        Layout.preferredHeight: implicitHeight
+        Layout.maximumHeight: implicitHeight
+        Layout.fillWidth: false
+        Layout.fillHeight: false
 
         Binding {
             target: Plasmoid
@@ -88,8 +94,8 @@ PlasmoidItem {
 
                 readonly property int buttonIndex: index
 
-                Layout.fillWidth: root.vertical
-                Layout.fillHeight: !root.vertical
+                Layout.fillWidth: false
+                Layout.fillHeight: root.vertical ? false : true
                 vertical: root.vertical
                 text: activeAction?.text ?? label
                 visible: text.length > 0 && (activeAction?.visible ?? true)
