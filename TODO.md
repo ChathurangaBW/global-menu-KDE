@@ -4,6 +4,7 @@
 
 - [x] Plasma 6 C++/QML applet scaffold.
 - [x] `org.kde.kappmenuview` registration so KDE's registrar activates.
+- [x] Reference-counted, undo-aware registrar-presence lifecycle compatible with KDE's stock widget.
 - [x] Reacquire the shared presence service if KDE's stock widget unregisters it.
 - [x] Active-window tracking through `LibTaskManager`.
 - [x] Canonical dbusmenu `GetLayout`, `AboutToShow`, and `Event` integration.
@@ -16,9 +17,13 @@
 - [x] User install and uninstall scripts with Plasma session plugin-path setup.
 - [x] Static source and packaging checks.
 - [x] Qt shortcut-translation unit tests.
+- [x] Fake dbusmenu exporter integration test in a private D-Bus session.
+- [x] Integration assertions for layout import, submenu/direct actions, disabled state, `AboutToShow`, `opened`, `closed`, and `clicked`.
 - [x] Plasma 6 CI configure and release compilation against current Arch Linux packages.
 - [x] Plasma 6 CI `ctest` execution.
 - [x] Staged CMake installation in CI.
+- [x] Headless staged-plugin load through `plasmawindowed`, Xvfb, and a private D-Bus session.
+- [x] Reusable version-adaptive Plasma applet smoke launcher.
 - [x] Installable CI artifact with prebuilt install/uninstall helpers.
 - [x] Artifact structure, ELF metadata, dependency list, install, environment-hook, and uninstall smoke tests.
 
@@ -34,7 +39,7 @@
 - [ ] Confirm hover switching between headings while a popup is open.
 - [ ] Confirm Left/Right keyboard navigation between headings.
 - [ ] Confirm correct popup placement on top, bottom, left, and right panels.
-- [ ] Confirm the registrar remains active after removing KDE's stock Global Menu widget.
+- [ ] Confirm registrar behavior while adding, removing, and undo-restoring stock and custom Global Menu widgets.
 - [ ] Confirm Wayland and X11 behavior.
 - [ ] Confirm high-DPI and RTL layouts.
 - [ ] Tune spacing against the supplied reference image at 24, 32, 40, and 48 px panel heights.
@@ -42,5 +47,5 @@
 ## Follow-up hardening
 
 - [ ] Process `ItemsPropertiesUpdated` incrementally instead of refreshing the complete layout.
-- [ ] Add an automated fake dbusmenu exporter for end-to-end protocol tests.
+- [ ] Add screenshot-based visual regression tests after desktop layout baselines are captured.
 - [ ] Publish a signed release after desktop QA.
