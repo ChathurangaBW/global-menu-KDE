@@ -1,10 +1,8 @@
 # Changelog
 
-All notable changes to Global Menu KDE are documented here.
+Notable changes to the rolling `main` branch are documented here. Global Menu KDE is distributed through its source installer rather than versioned distro packages or GitHub Release assets.
 
-The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and releases use semantic versioning.
-
-## [1.0.0] - 2026-08-07
+## Current
 
 ### Added
 
@@ -14,10 +12,19 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Native system plugin installation under `/usr` with no persistent `QT_PLUGIN_PATH` workaround.
 - Desktop fallback and application-menu transition tests.
 - Headless Plasma plugin discovery/load smoke tests.
-- Production package QA for Debian-family, Fedora/RPM-family, Arch Linux, and source archives.
+- Portable `install.sh` source installer with dependency mapping for apt, dnf, pacman, and zypper.
+- `--no-deps` installation path for other Plasma 6 distributions.
+- Persistent install manifest and `global-menu-kde-uninstall` helper.
 - Rich installation, architecture, QA, and visual documentation.
 
 ### Fixed
 
 - Desktop fallback submenu actions execute their real commands instead of being display-only.
 - Native Widget Explorer/panel integration and login/reboot persistence by using KDE's normal binary applet install path.
+
+### Distribution changes
+
+- Removed CPack DEB/RPM generation.
+- Removed Arch package metadata and Debian package metadata.
+- Removed the native-package/GitHub Release production workflow.
+- The supported distribution mechanism is now a host-compiled Plasma 6 source install from `main`.
