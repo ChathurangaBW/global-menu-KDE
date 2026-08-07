@@ -103,16 +103,12 @@ if [[ ${UNINSTALL} -eq 1 ]]; then
     fail "installed uninstaller not found; reinstall once, then run --uninstall"
 fi
 
-if ! command -v plasmashell >/dev/null 2>&1; then
+PLASMASHELL_PATH="$(command -v plasmashell || true)"
+if [[ -z "${PLASMASHELL_PATH}" ]]; then
     fail "KDE Plasma 6 is required (plasmashell was not found)"
 fi
-
-plasma_version="$(plasmashell --version 2>/dev/null | awk '{for (i=1; i<=NF; ++i) if ($i ~ /^[0-9]+([.][0-9]+)+$/) {print $i; exit}}')"
-plasma_major="${plasma_version%%.*}"
-if [[ -z "${plasma_version}" || ! "${plasma_major}" =~ ^[0-9]+$ || ${plasma_major} -lt 6 ]]; then
-    fail "KDE Plasma 6 is required (detected: ${plasma_version:-unknown})"
-fi
-printf 'Detected KDE Plasma %s\n' "${plasma_version}"
+printf 'Detected Plasma runtime: %s\n' "${PLASMASHELL_PATH}"
+printf 'CMake will verify Plasma 6 development compatibility during configure.\n'
 
 install_dependencies() {
     if command -v apt-get >/dev/null 2>&1; then
