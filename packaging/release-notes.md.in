@@ -1,0 +1,23 @@
+# Global Menu KDE @VERSION@
+
+Production release of the native KDE Plasma 6 Global Menu applet with desktop fallback.
+
+## Final release gate
+
+The release is published only after all required jobs pass:
+
+- static repository, metadata, SPDX and QML validation;
+- Release build and complete CTest suite;
+- ASan + UBSan test suite;
+- repeated D-Bus fallback → application menu → fallback stress tests;
+- Debian testing packages on amd64 and arm64, installed, smoke-tested and uninstalled;
+- Fedora 43 RPM packages on x86_64 and aarch64, installed, smoke-tested and uninstalled;
+- Arch Linux x86_64 package built with `makepkg`, installed, smoke-tested and uninstalled;
+- native Plasma plugin discovery with `QT_PLUGIN_PATH` unset;
+- package dependency audits and SHA-256 checksums.
+
+## Installation
+
+Use the package matching your distribution and CPU architecture. Official Arch Linux is x86_64; Debian and Fedora assets are provided for both x86_64/amd64 and ARM64/aarch64.
+
+See the repository `README.md` and `docs/INSTALL.md` for installation and upgrade instructions.
