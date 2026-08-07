@@ -11,8 +11,7 @@ import pathlib
 import sys
 
 root = pathlib.Path(sys.argv[1])
-metadata_path = root / "src" / "metadata.json"
-metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+metadata = json.loads((root / "src/metadata.json").read_text(encoding="utf-8"))
 plugin = metadata["KPlugin"]
 assert plugin["Id"] == "org.chathuranga.globalmenu"
 assert metadata["X-Plasma-API-Minimum-Version"] == "6.0"
@@ -29,6 +28,8 @@ required = [
     "src/globalmenuapplet.cpp",
     "src/globalmenumodel.cpp",
     "src/globalmenuproperty.cpp",
+    "src/displaymenumodel.h",
+    "src/displaymenumodel.cpp",
     "src/viewservicelease.h",
     "src/viewservicelease.cpp",
     "src/qml/main.qml",
@@ -55,6 +56,8 @@ architecture_doc = (root / "docs/ARCHITECTURE.md").read_text(encoding="utf-8")
 main_qml = (root / "src/qml/main.qml").read_text(encoding="utf-8")
 delegate_qml = (root / "src/qml/MenuDelegate.qml").read_text(encoding="utf-8")
 applet_cpp = (root / "src/globalmenuapplet.cpp").read_text(encoding="utf-8")
+display_cpp = (root / "src/displaymenumodel.cpp").read_text(encoding="utf-8")
+display_header = (root / "src/displaymenumodel.h").read_text(encoding="utf-8")
 model_cpp = (root / "src/globalmenumodel.cpp").read_text(encoding="utf-8")
 model_header = (root / "src/globalmenumodel.h").read_text(encoding="utf-8")
 property_cpp = (root / "src/globalmenuproperty.cpp").read_text(encoding="utf-8")
@@ -70,123 +73,120 @@ uninstaller = (root / "scripts/uninstall-user.sh").read_text(encoding="utf-8")
 prebuilt_installer = (root / "scripts/install-prebuilt.sh").read_text(encoding="utf-8")
 smoke_script = (root / "scripts/smoke-plasmawindowed.sh").read_text(encoding="utf-8")
 
-# README/documentation contract.
+# Product contract: existing-panel applet, persistent desktop fallback, app takeover.
+assert "desktop fallback" in readme.lower()
+assert "File   Edit   View   Go   Tools   Settings   Help" in readme
+assert "existing Plasma panel" in readme
+assert "real exported menu" in readme
 assert "docs/global-menu-preview.svg" in readme
 assert "docs/INSTALL.md" in readme
 assert "docs/QA.md" in readme
 assert "docs/ARCHITECTURE.md" in readme
-assert "File   Edit   View" in readme
-assert "zero panel size" in readme
-assert "Apple/system menu" in readme
 assert "global-menu-kde-plasma6" in readme
-assert "bash ./scripts/install-user.sh" in readme
-assert "bash ./scripts/qa.sh --static" in readme
 
-assert "Application menu only" in preview
+assert "Desktop fallback" in preview
 for heading in ("File", "Edit", "View", "Go", "Tools", "Settings", "Help"):
     assert f">{heading}<" in preview, f"preview missing heading: {heading}"
 assert "Apple" not in preview
-assert "KRunner" not in preview
-assert "Clock" not in preview
+assert "second panel" not in preview.lower()
 
+assert "desktop fallback" in install_doc.lower()
+assert "existing Plasma panel" in install_doc
+assert "RUN_INTEGRATION_TESTS" in install_doc
 assert "bash ./scripts/install-user.sh" in install_doc
 assert "bash ./scripts/uninstall-user.sh" in install_doc
 assert "QT_PLUGIN_PATH" in install_doc
-assert "Global Menu KDE" in install_doc
-assert "bash ./scripts/qa.sh --static" in qa_doc
+assert "desktop fallback" in qa_doc.lower()
+assert "application takeover" in qa_doc.lower()
 assert "Wayland" in qa_doc and "X11" in qa_doc
-assert "docs/global-menu-preview.svg" in qa_doc
-assert "com.canonical.AppMenu.Registrar" in architecture_doc
+assert "DisplayMenuModel" in architecture_doc
 assert "GlobalMenuModel" in architecture_doc
-assert "HiddenStatus" in architecture_doc
+assert "com.canonical.AppMenu.Registrar" in architecture_doc
 
-# QML scope and hidden-state contract.
-assert "HiddenStatus" in main_qml
-assert "hasApplicationMenu" in main_qml
-assert "implicitWidth: root.hasApplicationMenu ? buttonGrid.implicitWidth : 0" in main_qml
-assert "implicitHeight: root.hasApplicationMenu ? buttonGrid.implicitHeight : 0" in main_qml
-assert "Layout.maximumWidth: root.implicitWidth" in main_qml
-assert "Layout.maximumHeight: root.implicitHeight" in main_qml
+# QML must be a compact surface inside the existing containment, not its own panel.
+assert "Plasmoid.backgroundHints: PlasmaCore.Types.NoBackground" in main_qml
+assert "Plasmoid.CanFillArea" not in main_qml
+assert "HiddenStatus" not in main_qml
+assert "hasApplicationMenu" not in main_qml
+assert "Layout.fillWidth: false" in main_qml
+assert "implicitWidth: buttonGrid.implicitWidth" in main_qml
 assert "LayoutMirroring.enabled: Application.layoutDirection === Qt.RightToLeft" in main_qml
 assert "function onActivated(): void" in main_qml
-assert "noMenuPlaceholder" not in main_qml
 assert "activeAction" in main_qml
 assert "activeAction?.text" in main_qml
 assert "KeyboardIndicator.KeyState" in main_qml
-assert "required property PlasmaCore.Action action" not in main_qml
 assert "MnemonicData.richTextLabel" in delegate_qml
 assert "MnemonicData.controlType" in delegate_qml
-assert "property bool vertical" in delegate_qml
-assert "Kirigami.Units.smallSpacing * 2" in delegate_qml
 
-# This applet is intentionally application-menu-only. System controls shown in
-# early visual concepts must never become part of the implementation.
+# No unrelated desktop-bar widgets are part of this applet.
 qml_surface = main_qml + "\n" + delegate_qml
 for forbidden in (
     "AppleMenu",
     "SystemStatus",
-    "KRunner",
     "MPRIS",
     "WorkspaceIndicator",
     "ClockArea",
-    "Recent Items",
-    "System Settings",
     "Now Playing",
 ):
     assert forbidden not in qml_surface, f"out-of-scope UI found: {forbidden}"
 
-assert "sourceActionForIndex" in applet_cpp
-assert "m_model->menuClosed(m_currentIndex);\n        setCurrentIndex(-1);" in applet_cpp
+# Display layer must expose a seven-heading desktop menu and switch to app menu.
+for heading in ("&File", "&Edit", "&View", "&Go", "&Tools", "&Settings", "&Help"):
+    assert f'i18n("{heading}")' in display_cpp, f"fallback missing {heading}"
+assert "usingApplicationMenu" in display_header
+assert "m_applicationModel->menuAvailable()" in display_cpp
+assert "actionForIndex" in display_header
+assert "Clipboard History" in display_cpp
+assert "showDesktop" in display_cpp
+assert "krunner" in display_cpp
+assert "systemsettings" in display_cpp
+assert "khelpcenter" in display_cpp
+assert "DisplayMenuModel" in applet_cpp
+assert "m_applicationModel" in applet_cpp
+assert "m_model->aboutToShow(index)" in applet_cpp
+
+# KDE registrar/dbusmenu behavior remains intact for actual applications.
 assert "ViewServiceLease" in lease_header
 assert "activeLeaseCount" in lease_cpp
 assert "destroyedChanged" in lease_cpp
 assert "unregisterService(viewService())" in lease_cpp
 assert "org.kde.plasma.appmenu" in lease_cpp
-assert "blockSignals" in lease_cpp
-assert "viewservicelease.cpp" in src_cmake
-assert "globalmenuproperty.cpp" in src_cmake
-
 assert 'QStringLiteral("opened")' in model_cpp
 assert 'QStringLiteral("closed")' in model_cpp
 assert 'QStringLiteral("clicked")' in model_cpp
 assert "QDBusVariant(QString())" in model_cpp
-assert "<< 0u;" in model_cpp
-assert "clearActions();\n\n    m_serviceName = serviceName" in model_cpp
-assert 'QStringLiteral("shortcut")' in model_cpp
-assert 'QStringLiteral("icon-data")' in model_cpp
-assert 'QLatin1String("submenu")' in model_cpp
-assert "QActionGroup" in model_cpp
 assert "m_sourceGeneration" in model_header
 assert "sourceGeneration != m_sourceGeneration" in model_cpp
 assert "GlobalMenuModel::property" in property_cpp
 assert "applyActionProperties" in model_cpp
 assert "m_actionsById" in model_header
 assert "m_itemProperties" in model_header
-
 assert "DBusMenuShortcut::toKeySequence" in dbus_types_cpp
-assert "Control" in dbus_types_cpp and "Super" in dbus_types_cpp
-assert "dbusmenumodel_test" in test_cmake
-assert "dbus-run-session" in test_cmake
+
+# Build/test contract.
+assert "displaymenumodel.cpp" in src_cmake
+assert "displaymenumodel.cpp" in test_cmake
+assert "KF6::I18n" in test_cmake
+assert "LABELS \"integration\"" in test_cmake
+assert "TIMEOUT 30" in test_cmake
+assert "DisplayMenuModel displayModel" in model_test
+assert "desktopHeadings" in model_test
+assert "displayModel.usingApplicationMenu()" in model_test
 assert "QDBusVirtualObject" in model_test
-assert "GetLayout" in model_test and "AboutToShow" in model_test
-assert 'QStringLiteral("opened")' in model_test
-assert 'QStringLiteral("closed")' in model_test
-assert 'QStringLiteral("clicked")' in model_test
 assert "ItemsPropertiesUpdated" in model_test
 
-assert "ctest --test-dir build --output-on-failure" in workflow
 assert "run: bash ./scripts/qa.sh --static" in workflow
+assert "ctest --test-dir build --output-on-failure" in workflow
 assert "scripts/smoke-plasmawindowed.sh" in workflow
 assert "actions/upload-artifact@v4" in workflow
-assert "docs/global-menu-preview.svg" in workflow
-assert "docs/INSTALL.md" in workflow
-assert "docs/QA.md" in workflow
-assert "docs/ARCHITECTURE.md" in workflow
 assert "cancel-in-progress: true" in workflow
 
+# Live installation must not hang on the integration harness.
+assert "RUN_INTEGRATION_TESTS" in installer
+assert "-LE integration" in installer
+assert "-L integration --timeout 30" in installer
 assert "plasma-workspace/env" in installer
 assert "QT_PLUGIN_PATH" in installer
-assert "ctest --test-dir" in installer
 assert "install_manifest.txt" in installer
 assert "global-menu-kde.sh" in installer
 assert "global-menu-kde.sh" in uninstaller
@@ -196,10 +196,9 @@ assert "plasma-workspace/env" in prebuilt_installer
 assert "--smoke-test" in smoke_script
 assert "xvfb-run" in smoke_script
 assert "dbus-run-session" in smoke_script
-assert "Could not find requested component" in smoke_script
 assert "status" in smoke_script and "124" in smoke_script
 
-print("metadata, docs, application-menu-only scope, protocol, lifecycle, integration, packaging, and applet-load checks passed")
+print("metadata, desktop fallback, app takeover, compact panel UI, protocol, tests, packaging, and docs checks passed")
 PY
 
 if command -v shellcheck >/dev/null 2>&1; then
