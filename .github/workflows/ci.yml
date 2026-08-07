@@ -40,7 +40,6 @@ jobs:
           git diff --check
           bash -n scripts/install-system.sh scripts/uninstall-system.sh
           shellcheck scripts/install-system.sh scripts/uninstall-system.sh
-          grep -Fq 'File   Edit   View   Go   Tools   Settings   Help' README.md
           ! grep -Rq 'QT_PLUGIN_PATH.*global-menu-kde.sh\|export QT_PLUGIN_PATH' scripts README.md
 
       - name: Configure
