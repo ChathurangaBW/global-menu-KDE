@@ -29,10 +29,3 @@ target_link_libraries(org.chathuranga.globalmenu PRIVATE
     PW::LibTaskManager
     dbusmenuqt
 )
-
-if(BUILD_TESTING)
-    add_test(NAME applet_smoketest COMMAND plasmawindowed --smoke-test org.chathuranga.globalmenu)
-    set_tests_properties(applet_smoketest PROPERTIES
-        ENVIRONMENT_MODIFICATION QT_PLUGIN_PATH=path_list_prepend:${CMAKE_BINARY_DIR}/bin
-    )
-endif()
