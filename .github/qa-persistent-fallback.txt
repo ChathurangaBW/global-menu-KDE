@@ -1,1 +1,0 @@
-Temporary validation marker for the persistent desktop fallback/app takeover implementation.
