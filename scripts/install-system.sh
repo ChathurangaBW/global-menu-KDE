@@ -5,7 +5,6 @@ set -euo pipefail
 
 ROOT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 BUILD_DIR=${BUILD_DIR:-"$ROOT_DIR/build"}
-PLUGIN_ID=org.chathuranga.globalmenu
 LEGACY_ENV_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/plasma-workspace/env/global-menu-kde.sh"
 
 for command in cmake sudo; do
