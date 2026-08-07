@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 ChathurangaBW
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+#include "displaymenumodel.h"
 #include "globalmenumodel.h"
 
 #include <tasksmodel.h>
@@ -155,6 +156,30 @@ void GlobalMenuModelTest::importsLayoutAndForwardsEvents()
     QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
     QObject::disconnect(model.m_tasksModel, nullptr, &model, nullptr);
     model.m_tasksModel->blockSignals(true);
+
+    DisplayMenuModel displayModel(&model);
+    const QStringList desktopHeadings = {
+        QStringLiteral("File"),
+        QStringLiteral("Edit"),
+        QStringLiteral("View"),
+        QStringLiteral("Go"),
+        QStringLiteral("Tools"),
+        QStringLiteral("Settings"),
+        QStringLiteral("Help"),
+    };
+    QCOMPARE(displayModel.rowCount(), desktopHeadings.size());
+    for (int row = 0; row < desktopHeadings.size(); ++row) {
+        QCOMPARE(
+            displayModel.data(displayModel.index(row, 0), DisplayMenuModel::LabelRole).toString(),
+            desktopHeadings.at(row));
+        QAction *fallbackAction = displayModel
+                                      .data(displayModel.index(row, 0), DisplayMenuModel::ActionRole)
+                                      .value<QAction *>();
+        QVERIFY(fallbackAction);
+        QVERIFY(fallbackAction->menu());
+        QVERIFY(!fallbackAction->menu()->isEmpty());
+    }
+
     model.setSource(connection.baseService(), QString::fromLatin1(menuPath));
 
     QTRY_VERIFY_WITH_TIMEOUT(fakeMenu.getLayoutCalls > 0, 5000);
@@ -162,6 +187,11 @@ void GlobalMenuModelTest::importsLayoutAndForwardsEvents()
     QVERIFY(model.menuAvailable());
     QCOMPARE(model.data(model.index(0, 0), GlobalMenuModel::LabelRole).toString(), QStringLiteral("File"));
     QCOMPARE(model.data(model.index(1, 0), GlobalMenuModel::LabelRole).toString(), QStringLiteral("About"));
+
+    QTRY_COMPARE_WITH_TIMEOUT(displayModel.rowCount(), 2, 5000);
+    QCOMPARE(displayModel.data(displayModel.index(0, 0), DisplayMenuModel::LabelRole).toString(), QStringLiteral("File"));
+    QCOMPARE(displayModel.data(displayModel.index(1, 0), DisplayMenuModel::LabelRole).toString(), QStringLiteral("About"));
+    QVERIFY(displayModel.usingApplicationMenu());
 
     QAction *fileAction = model.data(model.index(0, 0), GlobalMenuModel::ActionRole).value<QAction *>();
     QVERIFY(fileAction);
@@ -235,6 +265,8 @@ void GlobalMenuModelTest::importsLayoutAndForwardsEvents()
     QTRY_VERIFY_WITH_TIMEOUT(!model.menuAvailable(), 5000);
     QVERIFY(!fileAction->isVisible());
     QVERIFY(!aboutAction->isVisible());
+    QTRY_COMPARE_WITH_TIMEOUT(displayModel.rowCount(), desktopHeadings.size(), 5000);
+    QVERIFY(!displayModel.usingApplicationMenu());
     QTest::qWait(100);
     QCOMPARE(fakeMenu.getLayoutCalls, layoutCallsBeforeProperties);
 
@@ -248,6 +280,8 @@ void GlobalMenuModelTest::importsLayoutAndForwardsEvents()
     QTRY_VERIFY_WITH_TIMEOUT(model.menuAvailable(), 5000);
     QVERIFY(fileAction->isVisible());
     QVERIFY(aboutAction->isVisible());
+    QTRY_COMPARE_WITH_TIMEOUT(displayModel.rowCount(), 2, 5000);
+    QVERIFY(displayModel.usingApplicationMenu());
     QTest::qWait(100);
     QCOMPARE(fakeMenu.getLayoutCalls, layoutCallsBeforeProperties);
 
@@ -256,6 +290,10 @@ void GlobalMenuModelTest::importsLayoutAndForwardsEvents()
     structuralUpdate.properties.insert(QStringLiteral("children-display"), QStringLiteral("submenu"));
     sendPropertiesUpdated({structuralUpdate}, {});
     QTRY_VERIFY_WITH_TIMEOUT(fakeMenu.getLayoutCalls > layoutCallsBeforeProperties, 5000);
+
+    model.setSource({}, {});
+    QTRY_COMPARE_WITH_TIMEOUT(displayModel.rowCount(), desktopHeadings.size(), 5000);
+    QVERIFY(!displayModel.usingApplicationMenu());
 
     connection.unregisterObject(QString::fromLatin1(menuPath), QDBusConnection::UnregisterNode);
 }
