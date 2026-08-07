@@ -1,0 +1,79 @@
+name: Native Global Menu Rewrite CI
+
+on:
+  push:
+    branches:
+      - rewrite/native-global-menu-fallback
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: native-rewrite-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  plasma6:
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    timeout-minutes: 35
+    steps:
+      - name: Install Plasma 6 build/runtime dependencies
+        run: >-
+          pacman -Syu --noconfirm
+          git base-devel cmake ninja extra-cmake-modules
+          qt6-base qt6-declarative
+          kconfig kcoreaddons ki18n kwindowsystem
+          libplasma plasma-workspace xorg-server-xvfb dbus file
+
+      - uses: actions/checkout@v4
+
+      - name: Trust checkout directory
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+      - name: Configure
+        run: >-
+          cmake -S . -B build -G Ninja
+          -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_INSTALL_PREFIX=/usr
+          -DBUILD_TESTING=ON
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
+      - name: Stage install
+        run: DESTDIR="$GITHUB_WORKSPACE/stage" cmake --install build
+
+      - name: Verify native Plasma plugin layout
+        run: |
+          plugin=$(find "$GITHUB_WORKSPACE/stage/usr" -type f -name 'org.chathuranga.globalmenu.so' -print -quit)
+          test -n "$plugin"
+          file "$plugin"
+          ldd "$plugin" | tee /tmp/ldd.txt
+          ! grep -q 'not found' /tmp/ldd.txt
+
+      - name: Load staged applet with plasmawindowed
+        run: |
+          plugin=$(find "$GITHUB_WORKSPACE/stage/usr" -type f -name 'org.chathuranga.globalmenu.so' -print -quit)
+          plugin_root=$(dirname "$(dirname "$(dirname "$plugin")")")
+          export QT_PLUGIN_PATH="$plugin_root${QT_PLUGIN_PATH:+:$QT_PLUGIN_PATH}"
+          export QT_QPA_PLATFORM=xcb
+          dbus-run-session -- xvfb-run -a bash -euo pipefail -c '
+            if plasmawindowed --help 2>&1 | grep -q -- "--smoke-test"; then
+              plasmawindowed --smoke-test org.chathuranga.globalmenu
+            else
+              timeout 8s plasmawindowed org.chathuranga.globalmenu >/tmp/plasmawindowed.log 2>&1 || code=$?
+              code=${code:-0}
+              if [[ $code -ne 0 && $code -ne 124 ]]; then
+                cat /tmp/plasmawindowed.log
+                exit $code
+              fi
+              ! grep -Eiq "failed to load|plugin.*not found|module .* is not installed|QQmlApplicationEngine failed" /tmp/plasmawindowed.log
+            fi
+          '
