@@ -62,14 +62,23 @@ set(CPACK_RPM_PACKAGE_GROUP "User Interface/Desktops")
 set(CPACK_RPM_PACKAGE_AUTOREQPROV ON)
 set(CPACK_RPM_FILE_NAME RPM-DEFAULT)
 
+# User-facing project documentation belongs to the installed package rather
+# than being inferred from README text by CI or packaging workflows.
+install(
+    FILES
+        README.md
+        CHANGELOG.md
+        LICENSE
+    DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/doc/${CPACK_PACKAGE_NAME}"
+)
+
+# Debian policy metadata. These files are harmless in RPM/Arch packages and
+# keep the single CMake install tree usable by CPack's DEB generator.
 install(
     FILES packaging/debian/copyright
     DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/doc/${CPACK_PACKAGE_NAME}"
 )
 
-# Debian native packages (no "-<revision>" in the version) are required by
-# lintian/policy to ship a compressed changelog even though this project is
-# also released as RPM/Arch packages from the same tree.
 find_program(GZIP_EXECUTABLE gzip)
 if(GZIP_EXECUTABLE)
     set(DEBIAN_CHANGELOG_GZ "${CMAKE_BINARY_DIR}/changelog.gz")
