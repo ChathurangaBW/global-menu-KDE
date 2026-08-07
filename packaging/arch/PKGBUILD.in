@@ -6,6 +6,7 @@ pkgdesc='Native KDE Plasma 6 Global Menu applet with desktop fallback'
 arch=('x86_64')
 url='https://github.com/ChathurangaBW/global-menu-KDE'
 license=('GPL-2.0-or-later')
+options=('!debug')
 depends=(
   'qt6-base'
   'qt6-declarative'
