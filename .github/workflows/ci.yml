@@ -9,43 +9,66 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   static-qa:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - name: Install QA tools
-        if: ${{ hashFiles('scripts/qa.sh') != '' }}
         run: sudo apt-get update && sudo apt-get install -y shellcheck
       - name: Run static QA
-        if: ${{ hashFiles('scripts/qa.sh') != '' }}
         run: bash ./scripts/qa.sh --static
-      - name: No source yet
-        if: ${{ hashFiles('scripts/qa.sh') == '' }}
-        run: echo "Source validation starts when the implementation branch is merged or opened as a pull request."
 
   plasma6-build:
     runs-on: ubuntu-latest
     container: archlinux:latest
+    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
       - name: Install Plasma 6 build dependencies
-        if: ${{ hashFiles('CMakeLists.txt') != '' }}
         run: >-
           pacman -Syu --noconfirm
           git base-devel cmake ninja extra-cmake-modules
           qt6-base qt6-declarative
-          kcoreaddons ki18n kwindowsystem
-          libplasma plasma-workspace
+          kconfig kcoreaddons ki18n kwindowsystem
+          libplasma plasma-workspace xorg-server-xvfb
+      - uses: actions/checkout@v4
+      - name: Trust checkout directory
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - name: Configure
-        if: ${{ hashFiles('CMakeLists.txt') != '' }}
-        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON
       - name: Build
-        if: ${{ hashFiles('CMakeLists.txt') != '' }}
         run: cmake --build build --parallel
       - name: Test
-        if: ${{ hashFiles('CMakeLists.txt') != '' }}
         run: ctest --test-dir build --output-on-failure
-      - name: No source yet
-        if: ${{ hashFiles('CMakeLists.txt') == '' }}
-        run: echo "The Plasma build starts when source files are present."
+      - name: Install into staging prefix
+        run: cmake --install build --prefix "$GITHUB_WORKSPACE/stage"
+      - name: Smoke-test Plasma applet loading
+        run: |
+          QT_PLUGIN_PATH="$GITHUB_WORKSPACE/stage/lib/qt6/plugins" \
+              bash ./scripts/smoke-plasmawindowed.sh org.chathuranga.globalmenu
+      - name: Add artifact installation helpers and docs
+        run: |
+          install -m0755 scripts/install-prebuilt.sh stage/install.sh
+          install -m0755 scripts/uninstall-prebuilt.sh stage/uninstall.sh
+          install -m0644 README.md stage/README.md
+          install -d stage/docs
+          install -m0644 \
+              docs/global-menu-preview.svg \
+              docs/INSTALL.md \
+              docs/QA.md \
+              docs/ARCHITECTURE.md \
+              stage/docs/
+      - name: Package staged installation
+        run: tar -C stage -czf global-menu-kde-plasma6.tar.gz .
+      - name: Upload installable artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: global-menu-kde-plasma6
+          path: global-menu-kde-plasma6.tar.gz
+          if-no-files-found: error
+          retention-days: 14
