@@ -78,12 +78,6 @@ git clone https://github.com/ChathurangaBW/global-menu-KDE.git
 cd global-menu-KDE
 ```
 
-For development/testing before PR #1 is merged:
-
-```bash
-git switch agent/plasma6-global-menu
-```
-
 ### One-command user installation
 
 ```bash
