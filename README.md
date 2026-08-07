@@ -95,17 +95,6 @@ Every successful CI run publishes an artifact named **`global-menu-kde-plasma6`*
 ```bash
 git clone https://github.com/ChathurangaBW/global-menu-KDE.git
 cd global-menu-KDE
-```
-
-While PR #1 is still under development, switch to the implementation branch:
-
-```bash
-git switch agent/plasma6-global-menu
-```
-
-Then run:
-
-```bash
 bash ./scripts/install-user.sh
 ```
 
