@@ -43,14 +43,16 @@ if [[ -s "$SYSTEM_MANIFEST" ]]; then
                 ;;
         esac
     done
-else
-    # Fallback for installations made before the persistent manifest existed.
-    while IFS= read -r plugin; do
-        as_root rm -f -- "$plugin"
-        printf 'Removed native plugin: %s\n' "$plugin"
-        removed=1
-    done < <(find /usr -type f -path "*/plasma/applets/$PLUGIN_ID.so" -print 2>/dev/null)
 fi
+
+# Always sweep this project's exact plugin ID after processing the manifest.
+# This also handles pre-manifest installations and stale copies left behind if
+# a distro/Qt upgrade changed the native plugin directory between installs.
+while IFS= read -r plugin; do
+    as_root rm -f -- "$plugin"
+    printf 'Removed native plugin: %s\n' "$plugin"
+    removed=1
+done < <(find /usr -type f -path "*/plasma/applets/$PLUGIN_ID.so" -print 2>/dev/null)
 
 rm -f -- "$LEGACY_ENV_FILE"
 if [[ -d "$HOME/.local" ]]; then
