@@ -35,7 +35,7 @@ jobs:
           git base-devel cmake ninja extra-cmake-modules
           qt6-base qt6-declarative
           kconfig kcoreaddons ki18n kwindowsystem
-          libplasma plasma-workspace
+          libplasma plasma-workspace xorg-server-xvfb
       - uses: actions/checkout@v4
       - name: Trust checkout directory
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
@@ -47,6 +47,10 @@ jobs:
         run: ctest --test-dir build --output-on-failure
       - name: Install into staging prefix
         run: cmake --install build --prefix "$GITHUB_WORKSPACE/stage"
+      - name: Smoke-test Plasma applet loading
+        env:
+          QT_PLUGIN_PATH: ${{ github.workspace }}/stage/lib/qt6/plugins
+        run: dbus-run-session -- xvfb-run -a plasmawindowed --smoke-test org.chathuranga.globalmenu
       - name: Add artifact installation helpers
         run: |
           install -m0755 scripts/install-prebuilt.sh stage/install.sh
