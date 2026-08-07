@@ -40,6 +40,7 @@ PlasmoidItem {
         id: buttonGrid
 
         visible: root.hasApplicationMenu
+        LayoutMirroring.enabled: Application.layoutDirection === Qt.RightToLeft
         flow: root.vertical ? GridLayout.TopToBottom : GridLayout.LeftToRight
         rowSpacing: 0
         columnSpacing: 0
