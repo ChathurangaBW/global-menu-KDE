@@ -17,6 +17,10 @@ target_link_libraries(dbusmenushortcut_test PRIVATE
 )
 
 add_test(NAME dbusmenushortcut_test COMMAND dbusmenushortcut_test)
+set_tests_properties(dbusmenushortcut_test PROPERTIES
+    LABELS "unit"
+    TIMEOUT 15
+)
 
 find_program(DBUS_RUN_SESSION_EXECUTABLE dbus-run-session REQUIRED)
 
@@ -48,4 +52,6 @@ add_test(
 )
 set_tests_properties(dbusmenumodel_test PROPERTIES
     ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
+    LABELS "integration"
+    TIMEOUT 30
 )
