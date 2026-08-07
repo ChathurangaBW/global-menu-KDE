@@ -1,0 +1,47 @@
+# Maintainer: ChathurangaBW
+pkgname=global-menu-kde
+pkgver=1.0.0
+pkgrel=1
+pkgdesc='KDE Plasma 6 global menu applet with desktop fallback'
+arch=('x86_64')
+url='https://github.com/ChathurangaBW/global-menu-KDE'
+license=('GPL-2.0-or-later')
+depends=(
+  'plasma-workspace'
+  'libplasma'
+  'qt6-base'
+  'qt6-declarative'
+  'kconfig'
+  'kcoreaddons'
+  'ki18n'
+  'kwindowsystem'
+)
+makedepends=(
+  'cmake'
+  'ninja'
+  'extra-cmake-modules'
+)
+checkdepends=('xorg-server-xvfb')
+source=()
+sha256sums=()
+
+build() {
+  cmake \
+    -S "$startdir/../.." \
+    -B "$srcdir/build" \
+    -G Ninja \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX=/usr \
+    -DBUILD_TESTING=ON
+  cmake --build "$srcdir/build" --parallel
+}
+
+check() {
+  ctest --test-dir "$srcdir/build" --output-on-failure
+}
+
+package() {
+  DESTDIR="$pkgdir" cmake --install "$srcdir/build"
+  install -Dm644 "$startdir/../../LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm644 "$startdir/../../README.md" "$pkgdir/usr/share/doc/$pkgname/README.md"
+}
