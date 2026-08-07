@@ -11,6 +11,7 @@
 - [x] dbusmenu `opened`, `closed`, and `clicked` lifecycle events.
 - [x] Native `QMenu` popup rendering and direct top-level action activation.
 - [x] Disabled actions, check items, contiguous exclusive radio groups, icons, exported keyboard shortcuts, and mnemonics.
+- [x] Incremental `ItemsPropertiesUpdated` handling for non-structural action changes, with full-layout fallback for structural changes.
 - [x] Top-level menu headings only.
 - [x] Complete hiding when no active application menu is exported.
 - [x] No persistent placeholder, Apple menu, search, clock, workspace controls, or synthetic fallback.
@@ -18,7 +19,7 @@
 - [x] Static source and packaging checks.
 - [x] Qt shortcut-translation unit tests.
 - [x] Fake dbusmenu exporter integration test in a private D-Bus session.
-- [x] Integration assertions for layout import, submenu/direct actions, disabled state, `AboutToShow`, `opened`, `closed`, and `clicked`.
+- [x] Integration assertions for layout import, submenu/direct actions, disabled state, incremental property updates, `AboutToShow`, `opened`, `closed`, and `clicked`.
 - [x] Plasma 6 CI configure and release compilation against current Arch Linux packages.
 - [x] Plasma 6 CI `ctest` execution.
 - [x] Staged CMake installation in CI.
@@ -46,6 +47,5 @@
 
 ## Follow-up hardening
 
-- [ ] Process `ItemsPropertiesUpdated` incrementally instead of refreshing the complete layout.
 - [ ] Add screenshot-based visual regression tests after desktop layout baselines are captured.
 - [ ] Publish a signed release after desktop QA.
