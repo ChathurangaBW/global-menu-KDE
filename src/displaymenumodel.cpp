@@ -29,7 +29,7 @@ void addUrlAction(QMenu *menu, const QString &text, const QUrl &url)
 {
     QAction *action = menu->addAction(text);
     action->setEnabled(url.isValid() && !url.isEmpty());
-    QObject::connect(action, &QAction::triggered, menu, [url] {
+    QObject::connect(action, &QAction::triggered, action, [url] {
         QDesktopServices::openUrl(url);
     });
 }
@@ -39,7 +39,7 @@ void addLocationAction(QMenu *menu, const QString &text, QStandardPaths::Standar
     const QString path = QStandardPaths::writableLocation(location);
     QAction *action = menu->addAction(text);
     action->setEnabled(!path.isEmpty());
-    QObject::connect(action, &QAction::triggered, menu, [path] {
+    QObject::connect(action, &QAction::triggered, action, [path] {
         if (!path.isEmpty()) {
             QDesktopServices::openUrl(QUrl::fromLocalFile(path));
         }
@@ -51,7 +51,7 @@ void addProgramAction(QMenu *menu, const QString &text, const QString &program, 
     const QString executable = QStandardPaths::findExecutable(program);
     QAction *action = menu->addAction(text);
     action->setEnabled(!executable.isEmpty());
-    QObject::connect(action, &QAction::triggered, menu, [executable, arguments] {
+    QObject::connect(action, &QAction::triggered, action, [executable, arguments] {
         if (!executable.isEmpty()) {
             QProcess::startDetached(executable, arguments);
         }
@@ -203,7 +203,7 @@ void DisplayMenuModel::buildDesktopFallback()
 
     QMenu *editMenu = addTopLevel(i18n("&Edit"));
     QAction *clipboardAction = editMenu->addAction(i18n("Clipboard History"));
-    QObject::connect(clipboardAction, &QAction::triggered, editMenu, [] {
+    QObject::connect(clipboardAction, &QAction::triggered, clipboardAction, [] {
         callSessionBus(
             QStringLiteral("org.kde.klipper"),
             QStringLiteral("/klipper"),
@@ -213,7 +213,7 @@ void DisplayMenuModel::buildDesktopFallback()
 
     QMenu *viewMenu = addTopLevel(i18n("&View"));
     QAction *showDesktopAction = viewMenu->addAction(i18n("Show Desktop"));
-    QObject::connect(showDesktopAction, &QAction::triggered, viewMenu, [] {
+    QObject::connect(showDesktopAction, &QAction::triggered, showDesktopAction, [] {
         callSessionBus(
             QStringLiteral("org.kde.KWin"),
             QStringLiteral("/KWin"),
@@ -222,7 +222,7 @@ void DisplayMenuModel::buildDesktopFallback()
             {true});
     });
     QAction *restoreWindowsAction = viewMenu->addAction(i18n("Restore Windows"));
-    QObject::connect(restoreWindowsAction, &QAction::triggered, viewMenu, [] {
+    QObject::connect(restoreWindowsAction, &QAction::triggered, restoreWindowsAction, [] {
         callSessionBus(
             QStringLiteral("org.kde.KWin"),
             QStringLiteral("/KWin"),
