@@ -17,9 +17,25 @@ A focused Plasma 6 panel applet that shows only the active application's exporte
 - Canonical dbusmenu layout import and action activation.
 - Native `QMenu` submenus, disabled actions, check items, exclusive radio groups, icons, exported shortcuts, and mnemonics.
 - `AboutToShow`, `opened`, `closed`, and `clicked` dbusmenu lifecycle handling.
-- Automatic reacquisition of `org.kde.kappmenuview` if KDE's stock Global Menu widget is removed.
+- Reference-counted, undo-aware `org.kde.kappmenuview` lifecycle compatible with KDE's stock Global Menu widget.
 - Complete hidden-state behavior when no exported menu is available.
-- Static QA, Qt unit tests, Plasma 6 release compilation, staged installation, and prebuilt artifact generation in CI.
+- Static QA, Qt unit tests, fake-exporter integration tests, Plasma 6 release compilation, staged installation, headless applet loading, and prebuilt artifact generation in CI.
+
+## Automated validation
+
+The CI pipeline validates:
+
+- source structure, scope, protocol behavior, lifecycle safeguards, and packaging assertions;
+- ShellCheck for all repository scripts;
+- Qt shortcut-token translation tests;
+- a fake `com.canonical.dbusmenu` exporter in a private D-Bus session;
+- layout import, submenu and direct actions, disabled state, `AboutToShow`, `opened`, `closed`, and `clicked` forwarding;
+- Plasma 6 release compilation and linking;
+- staged CMake installation;
+- staged-plugin loading through `plasmawindowed` under Xvfb and a private D-Bus session;
+- installable artifact creation and upload.
+
+Real-panel interaction and visual checks remain listed in [`TODO.md`](TODO.md).
 
 ## Target environment
 
@@ -54,6 +70,12 @@ cmake --build build --parallel
 ctest --test-dir build --output-on-failure
 ```
 
+Run the repository QA, including a local applet-load smoke test when Plasma tooling is available:
+
+```bash
+bash ./scripts/qa.sh
+```
+
 ## Install from source for the current user
 
 ```bash
@@ -78,15 +100,9 @@ bash ./scripts/uninstall-user.sh
 
 Log out and back in after uninstalling so the session plugin path is removed.
 
-## QA
-
-```bash
-bash ./scripts/qa.sh
-```
+## Expected behavior
 
 The applet should occupy no panel space on the desktop or while focusing an application without an exported menu. It should appear when an exporting application such as Dolphin or Kate is active.
-
-Interactive Plasma session checks are tracked in [`TODO.md`](TODO.md).
 
 ## License
 
