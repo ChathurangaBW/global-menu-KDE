@@ -3,9 +3,11 @@
 set -euo pipefail
 
 PLUGIN_ID=${1:-org.chathuranga.globalmenu}
-LOG_FILE=${LOG_FILE:-"$(mktemp)"}
 REMOVE_LOG=0
-if [[ -z "${LOG_FILE:-}" ]]; then
+if [[ -n "${LOG_FILE:-}" ]]; then
+    LOG_FILE=${LOG_FILE}
+else
+    LOG_FILE=$(mktemp)
     REMOVE_LOG=1
 fi
 
