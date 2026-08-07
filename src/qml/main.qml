@@ -18,17 +18,28 @@ PlasmoidItem {
     id: root
 
     readonly property bool vertical: Plasmoid.formFactor === PlasmaCore.Types.Vertical
+    readonly property bool hasApplicationMenu: Plasmoid.model.menuAvailable
 
     preferredRepresentation: fullRepresentation
     Plasmoid.constraintHints: Plasmoid.CanFillArea
-    Plasmoid.status: Plasmoid.model.menuAvailable
+    Plasmoid.status: root.hasApplicationMenu
         ? PlasmaCore.Types.ActiveStatus
         : PlasmaCore.Types.HiddenStatus
+
+    // A non-exporting application must leave no placeholder or dead panel gap.
+    implicitWidth: root.hasApplicationMenu ? buttonGrid.implicitWidth : 0
+    implicitHeight: root.hasApplicationMenu ? buttonGrid.implicitHeight : 0
+    Layout.minimumWidth: root.implicitWidth
+    Layout.preferredWidth: root.implicitWidth
+    Layout.maximumWidth: root.implicitWidth
+    Layout.minimumHeight: root.implicitHeight
+    Layout.preferredHeight: root.implicitHeight
+    Layout.maximumHeight: root.implicitHeight
 
     fullRepresentation: GridLayout {
         id: buttonGrid
 
-        visible: Plasmoid.model.menuAvailable
+        visible: root.hasApplicationMenu
         flow: root.vertical ? GridLayout.TopToBottom : GridLayout.LeftToRight
         rowSpacing: 0
         columnSpacing: 0
@@ -68,6 +79,7 @@ PlasmoidItem {
 
                 Layout.fillWidth: root.vertical
                 Layout.fillHeight: !root.vertical
+                vertical: root.vertical
                 text: activeAction?.text ?? label
                 visible: text.length > 0 && (activeAction?.visible ?? true)
                 enabled: activeAction?.enabled ?? true
