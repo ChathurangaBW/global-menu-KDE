@@ -67,6 +67,16 @@ PlasmoidItem {
             }
         }
 
+        Connections {
+            target: Plasmoid
+            function onActivated(): void {
+                const button = menuRepeater.itemAt(0) as MenuDelegate;
+                if (button) {
+                    button.activated();
+                }
+            }
+        }
+
         Repeater {
             id: menuRepeater
             model: Plasmoid.model
