@@ -1,32 +1,41 @@
 # Global Menu KDE
 
-[![CI](https://github.com/ChathurangaBW/global-menu-KDE/actions/workflows/ci.yml/badge.svg)](https://github.com/ChathurangaBW/global-menu-KDE/actions/workflows/ci.yml)
-![Plasma 6](https://img.shields.io/badge/KDE%20Plasma-6-1d99f3)
-![Qt 6](https://img.shields.io/badge/Qt-6-41cd52)
+<p align="center">
+  <strong>KDE Plasma's native Global Menu applet, with the missing desktop menu state added.</strong>
+</p>
 
-**KDE Plasma's native Global Menu applet, with one missing desktop state added.**
+<p align="center">
+  <a href="https://github.com/ChathurangaBW/global-menu-KDE/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/ChathurangaBW/global-menu-KDE/actions/workflows/ci.yml/badge.svg"></a>
+  <img alt="KDE Plasma 6" src="https://img.shields.io/badge/KDE%20Plasma-6-1d99f3">
+  <img alt="Qt 6" src="https://img.shields.io/badge/Qt-6-41cd52">
+  <img alt="C++" src="https://img.shields.io/badge/C%2B%2B-20-00599C">
+  <img alt="License" src="https://img.shields.io/badge/license-GPL--2.0--or--later-4c1">
+</p>
 
-When no application provides a global menu, the applet shows:
+<p align="center">
+  <img src="docs/screenshots/panel-states.svg" alt="Global Menu KDE switching between desktop fallback and Dolphin application menu" width="100%">
+</p>
 
-```text
-File   Edit   View   Go   Tools   Settings   Help
-```
+> **One panel. Native KDE behavior. One added state.**  
+> When no application exports a global menu, the applet shows a useful desktop fallback. When Dolphin, Kate, KWrite, or another compatible application becomes active, KDE's normal exported application menu takes over automatically.
 
-When Dolphin, Kate, KWrite, or another compatible application becomes active, KDE's normal application menu takes over. When that menu disappears, the desktop fallback returns.
+## What it does
 
-## Design rule
+| Plasma state | What Global Menu KDE shows |
+| --- | --- |
+| Desktop / no exported application menu | `File  Edit  View  Go  Tools  Settings  Help` |
+| Dolphin/Kate/KWrite/etc. exports a menu | The application's **real KDE global menu** |
+| Application closes / stops exporting | Desktop fallback returns automatically |
 
-This project does **not** implement a second panel or a custom global-menu shell. It is based directly on Plasma Workspace's native `applets/appmenu` architecture:
+This project does **not** create a second panel, an Apple-style system bar, a clock, workspace controls, search, or status widgets. It stays inside the user's existing Plasma panel and preserves KDE's native Global Menu interaction model.
 
-- KDE's `AppMenuApplet` popup/controller behavior;
-- KDE's `AppMenuModel` active-window behavior;
-- KDE's native `org.kde.kappmenuview` lifecycle;
-- KDE's native panel sizing, compact/full modes, hover switching, keyboard handling, RTL behavior, and configuration UI;
-- KDE's private `dbusmenuqt` importer, vendored with its original licensing because Plasma Workspace builds it as a private static target.
+## Desktop fallback preview
 
-The project-specific change is isolated to the **no-application-menu state**: instead of hiding, the model supplies a local desktop `QMenu` with seven headings.
+<p align="center">
+  <img src="docs/screenshots/desktop-file-menu.svg" alt="Desktop fallback File menu with Home Folder, Documents, Downloads and Trash" width="82%">
+</p>
 
-## Desktop fallback
+The desktop fallback contains useful Plasma actions only while no compatible application menu is available:
 
 | Menu | Desktop actions |
 | --- | --- |
@@ -38,46 +47,27 @@ The project-specific change is isolated to the **no-application-menu state**: in
 | **Settings** | System Settings |
 | **Help** | KDE Help Center |
 
-These fallback actions are present only while no usable application menu is exported.
+As soon as a real application menu appears, this fallback is removed from the presentation and KDE's normal dbusmenu-backed application menu is shown instead.
 
-## Production packages
+## Architecture
 
-Production releases publish native packages built and smoke-tested on the target packaging family:
-
-| Package | Target | CPU architectures |
-| --- | --- | --- |
-| `.deb` | Debian testing / compatible Plasma 6 Debian-family systems | `amd64`, `arm64` |
-| `.rpm` | Fedora 44 / compatible Plasma 6 RPM-family systems | `x86_64`, `aarch64` |
-| `.pkg.tar.zst` | Official Arch Linux | `x86_64` |
-| `.tar.gz` | Source archive | architecture-independent source |
-
-Every release also contains `SHA256SUMS`. Official Arch Linux itself targets x86-64, so the Arch package is intentionally x86-64; ARM64 is covered by the Debian and Fedora package builds.
-
-### Install a release package
-
-Debian/Ubuntu-family Plasma 6:
-
-```bash
-sudo apt install ./global-menu-kde_1.0.0_amd64.deb
+```mermaid
+flowchart TD
+    A[Existing Plasma panel] --> B[KDE AppMenuApplet / native QML]
+    B --> C[AppMenuModel]
+    C -->|Application menu exported| D[KDE dbusmenu importer]
+    C -->|No application menu| E[Desktop fallback QMenu]
+    D --> F[Real application headings and actions]
+    E --> G[File · Edit · View · Go · Tools · Settings · Help]
 ```
 
-Fedora/RPM-family Plasma 6:
+The implementation is based directly on Plasma Workspace's native `applets/appmenu` architecture. KDE's popup/controller behavior, active-window tracking, panel sizing, keyboard handling, hover switching, RTL behavior, and appmenu lifecycle are retained. The project-specific change is isolated to the **no-application-menu state**.
 
-```bash
-sudo dnf install ./global-menu-kde-1.0.0-1.x86_64.rpm
-```
+Read the detailed design: **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**.
 
-Arch Linux:
+## Install on KDE neon / Ubuntu-family Plasma 6
 
-```bash
-sudo pacman -U ./global-menu-kde-1.0.0-1-x86_64.pkg.tar.zst
-```
-
-After the first installation, log out and back in once so the running Plasma session fully rescans binary applets. Then add **Global Menu KDE** directly to your existing Plasma panel. Remove KDE's stock **Global Menu** widget if you do not want both applets present.
-
-## Build from source
-
-For KDE neon / Ubuntu-family Plasma 6, install the build dependencies first:
+Install the build dependencies:
 
 ```bash
 sudo apt update
@@ -88,7 +78,7 @@ sudo apt install \
   libplasma-dev plasma-workspace-dev
 ```
 
-Then:
+Clone and install into KDE's normal system plugin location:
 
 ```bash
 git clone https://github.com/ChathurangaBW/global-menu-KDE.git
@@ -96,9 +86,13 @@ cd global-menu-KDE
 bash ./scripts/install-system.sh
 ```
 
-The installer uses `/usr`, the normal Qt/KDE plugin prefix used by native Plasma binary applets. It does **not** create a `QT_PLUGIN_PATH` session workaround.
+Then log out of Plasma and back in once. Open **Edit Mode → Add Widgets**, search for **Global Menu KDE**, and drag it **directly into your existing panel**, exactly like KDE's native Global Menu widget.
 
-Manual build:
+The current rewrite installs under `/usr`; it does **not** depend on the old `~/.local` + `QT_PLUGIN_PATH` development workaround.
+
+For manual build, upgrades, legacy-cleanup notes, and uninstall instructions, see **[docs/INSTALL.md](docs/INSTALL.md)**.
+
+## Manual build
 
 ```bash
 cmake -S . -B build -G Ninja \
@@ -111,39 +105,36 @@ sudo cmake --install build
 kbuildsycoca6 --noincremental
 ```
 
-## Final production QA gate
+## Release packages
 
-A production release is created **only after** the dedicated release workflow passes every gate below:
+The production pipeline is designed to publish native packages only after package-specific install and Plasma smoke tests pass:
 
-- repository integrity and `git diff --check`;
-- JSON metadata validation and strict project/metadata version synchronization;
-- ShellCheck and Bash syntax validation for system install/uninstall scripts;
-- SPDX license-header audit across source, tests, QML, vendored code, and scripts;
-- `qmllint` against the Plasma 6 QML environment;
-- complete Release build and CTest suite;
-- AddressSanitizer + UndefinedBehaviorSanitizer build and tests;
-- repeated private-session D-Bus stress testing of **fallback → application menu → fallback**;
-- real dbusmenu direct-action and submenu activation through the test fixture;
-- `.deb` builds on native `amd64` and `arm64` runners;
-- `.rpm` builds on native `x86_64` and `aarch64` runners;
-- native Arch package creation with `makepkg`;
-- package metadata/lint inspection (`lintian`, `rpmlint`, `namcap`);
-- installation of every generated package into its target distribution environment;
-- ELF dependency audit with `ldd` and rejection of unresolved libraries;
-- Plasma `plasmawindowed` smoke load after package installation;
-- native plugin discovery with **`QT_PLUGIN_PATH` unset**;
-- uninstall smoke test confirming the package and plugin are actually removed;
-- source archive generation and final SHA-256 checksums.
+| Package | Distribution family | Architectures |
+| --- | --- | --- |
+| `.deb` | Debian / Ubuntu / KDE neon compatible Plasma 6 systems | `amd64`, `arm64` |
+| `.rpm` | Fedora / compatible Plasma 6 RPM systems | `x86_64`, `aarch64` |
+| `.pkg.tar.zst` | Official Arch Linux | `x86_64` |
+| `.tar.gz` | Source | architecture-independent |
 
-The GitHub Release publish job depends on all of those jobs, so a failed architecture, package, sanitizer, test, install, discovery, or uninstall check blocks the release.
+**Release integrity rule:** a GitHub Release is not considered production-ready until its downloadable assets and `SHA256SUMS` are actually present and their package jobs are green. If a release page is empty or incomplete, use the source installation above rather than treating that release as valid.
 
-## Uninstall source installation
+## QA philosophy
 
-```bash
-bash ./scripts/uninstall-system.sh
-```
+Rendering the menu is not enough. The release contract checks behavior across the full lifecycle:
 
-Then log out and back in to refresh Plasma completely.
+- desktop fallback → real application menu → desktop fallback;
+- real dbusmenu direct actions and submenus;
+- desktop fallback action dispatch;
+- Release build + CTest;
+- sanitizer and repeated integration runs;
+- native `/usr` plugin installation;
+- Plasma discovery with `QT_PLUGIN_PATH` unset;
+- `plasmawindowed` smoke loading;
+- package install/uninstall checks;
+- unresolved ELF dependency rejection;
+- native package validation before release publication.
+
+The complete automated and manual matrix is documented in **[docs/QA.md](docs/QA.md)**.
 
 ## Repository layout
 
@@ -163,11 +154,24 @@ Then log out and back in to refresh Plasma completely.
 ├── scripts/
 │   ├── install-system.sh
 │   └── uninstall-system.sh
+├── docs/
+│   ├── ARCHITECTURE.md
+│   ├── INSTALL.md
+│   ├── QA.md
+│   └── screenshots/
 └── README.md
 ```
+
+## Documentation
+
+- **[Installation and upgrades](docs/INSTALL.md)**
+- **[Architecture](docs/ARCHITECTURE.md)**
+- **[QA and release validation](docs/QA.md)**
+- **[Visual: panel state switching](docs/screenshots/panel-states.svg)**
+- **[Visual: desktop File menu](docs/screenshots/desktop-file-menu.svg)**
 
 ## Upstream and licensing
 
 The native applet portions are derived from KDE Plasma Workspace's Global Menu applet and retain KDE's original SPDX copyright/license declarations. The vendored `libdbusmenuqt` files retain their Canonical/KDE `LGPL-2.0-or-later` declarations. Project-specific fallback code uses `GPL-2.0-or-later`.
 
-See `LICENSE` and the SPDX header in each source file for the authoritative license of that file.
+See `LICENSE` and each source file's SPDX header for the authoritative license terms.
