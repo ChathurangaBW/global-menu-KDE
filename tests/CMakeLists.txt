@@ -29,6 +29,8 @@ qt_add_executable(dbusmenumodel_test
     ../src/globalmenumodel.cpp
     ../src/globalmenumodel.h
     ../src/globalmenuproperty.cpp
+    ../src/displaymenumodel.cpp
+    ../src/displaymenumodel.h
     ../src/dbusmenutypes.cpp
     ../src/dbusmenutypes.h
 )
@@ -43,6 +45,7 @@ target_link_libraries(dbusmenumodel_test PRIVATE
     Qt::Gui
     Qt::Widgets
     Qt::Test
+    KF6::I18n
     PW::LibTaskManager
 )
 
