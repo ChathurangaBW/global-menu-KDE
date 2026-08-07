@@ -9,6 +9,7 @@
 #include <QAction>
 #include <QDBusConnection>
 #include <QDBusMessage>
+#include <QDBusPendingCall>
 #include <QDesktopServices>
 #include <QDir>
 #include <QMenu>
