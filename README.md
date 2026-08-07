@@ -98,7 +98,21 @@ The current rewrite installs under `/usr`; it does **not** depend on the old `~/
 
 For manual build, upgrades, legacy-cleanup notes, and uninstall instructions, see **[docs/INSTALL.md](docs/INSTALL.md)**.
 
-## Manual build
+## Build
+
+Build locally with one command:
+
+```bash
+bash ./scripts/build.sh
+```
+
+To install it system-wide after a successful build:
+
+```bash
+bash ./scripts/install-system.sh
+```
+
+To configure, build, and test manually:
 
 ```bash
 cmake -S . -B build -G Ninja \
