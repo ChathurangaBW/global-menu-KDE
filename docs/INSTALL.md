@@ -88,11 +88,20 @@ The installer will:
 
 1. Configure a Release build.
 2. Compile the Plasma applet.
-3. Run `ctest`.
-4. Install under `~/.local` by default.
-5. Find the installed Qt plugin directory from CMake's install manifest.
-6. Create `~/.config/plasma-workspace/env/global-menu-kde.sh` so Plasma can discover the plugin at session startup.
-7. Refresh KDE's service cache when `kbuildsycoca6` is available.
+3. Run the deterministic package/unit tests used for local installation.
+4. Skip the private-D-Bus `dbusmenumodel_test` by default because some live Plasma development/unstable sessions can take a long time to tear that isolated test environment down.
+5. Install under `~/.local` by default.
+6. Find the installed Qt plugin directory from CMake's install manifest.
+7. Create `~/.config/plasma-workspace/env/global-menu-kde.sh` so Plasma can discover the plugin at session startup.
+8. Refresh KDE's service cache when `kbuildsycoca6` is available.
+
+The full D-Bus integration test remains mandatory in GitHub CI and `scripts/qa.sh`, where it has a 30-second hard timeout.
+
+To explicitly run it during local installation:
+
+```bash
+RUN_INTEGRATION_TESTS=1 bash ./scripts/install-user.sh
+```
 
 After installation, **log out and log back in**, then add **Global Menu KDE** to the panel.
 
@@ -170,6 +179,21 @@ After logging back in, **Global Menu KDE** should appear in Plasma's widget pick
 - There is no Apple/system menu, launcher, clock, search, workspace control, or placeholder.
 
 ## Troubleshooting
+
+### KDE neon/unstable appears to stop at `dbusmenumodel_test`
+
+Older revisions of the installer ran the private-session dbusmenu integration test during every local install. On some KDE neon development/unstable combinations, the test process can take a long time to terminate because it creates a private D-Bus session while loading Plasma Workspace's task model.
+
+Update the repository and rerun the installer:
+
+```bash
+git pull
+bash ./scripts/install-user.sh
+```
+
+Current `main` does not run that integration test during ordinary installation. CI/full QA still runs it with a hard 30-second timeout.
+
+If an older installer is already waiting at that test, press **Ctrl+C**, pull the current `main`, and rerun the command above. The completed compilation can normally be reused by CMake.
 
 ### The widget is installed but missing from the widget picker
 
