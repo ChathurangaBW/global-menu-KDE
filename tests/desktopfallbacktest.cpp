@@ -306,7 +306,10 @@ void DesktopFallbackTest::programActionsDispatch()
         QVERIFY(writeLauncher(dir.filePath(QString::fromLatin1(launcher.program)), QString::fromLatin1(launcher.marker)));
     }
 
-    qputenv("PATH", dir.path().toUtf8() + ':' + oldPath);
+    QByteArray testPath = dir.path().toUtf8();
+    testPath.append(':');
+    testPath.append(oldPath);
+    qputenv("PATH", testPath);
     qputenv("GLOBAL_MENU_KDE_TEST_PROGRAM_LOG", logPath.toUtf8());
 
     DesktopFallback fallback;
