@@ -1,33 +1,90 @@
 # Installation
 
-Global Menu KDE is a native Plasma 6 binary applet. It installs into the normal system Qt/Plasma plugin prefix so Widget Explorer and panel drag/drop work like KDE's built-in Global Menu applet.
+Global Menu KDE is a native Plasma 6 binary applet, but it is distributed through a portable **source installer** rather than prebuilt distro packages. Building on the target machine links the plugin against that machine's Qt 6, KF6, Plasma, and LibTaskManager ABI.
 
-## KDE neon / Ubuntu-family Plasma 6
+## Recommended install
 
-Install build dependencies:
+Run the installer as your normal desktop user, not with `sudo`:
 
 ```bash
-sudo apt update
-sudo apt install \
-  git build-essential cmake ninja-build extra-cmake-modules \
-  qt6-base-dev qt6-declarative-dev \
-  libkf6config-dev libkf6i18n-dev libkf6windowsystem-dev \
-  libplasma-dev plasma-workspace-dev
+curl -fsSL https://raw.githubusercontent.com/ChathurangaBW/global-menu-KDE/main/install.sh | bash
 ```
 
-Clone and install:
+Or clone first so you can inspect the code before executing it:
 
 ```bash
 git clone https://github.com/ChathurangaBW/global-menu-KDE.git
 cd global-menu-KDE
-bash ./scripts/install-system.sh
+bash ./install.sh
 ```
 
-The installer builds with tests enabled, installs under `/usr`, refreshes KDE's service cache, and does not create a `QT_PLUGIN_PATH` session workaround.
+The installer:
+
+1. verifies that Plasma 6 is installed;
+2. detects `apt`, `dnf`, `pacman`, or `zypper` and installs the required development dependencies;
+3. configures a Release build with tests enabled;
+4. builds and runs CTest as the desktop user;
+5. installs the plugin system-wide under `/usr` using `sudo` or `doas`;
+6. checks the installed plugin for unresolved shared-library dependencies;
+7. removes this project's obsolete user-local plugin / environment-hook leftovers;
+8. stores the exact CMake install manifest under `/var/lib/global-menu-kde`;
+9. installs `global-menu-kde-uninstall` for deterministic removal.
+
+The installer never creates or exports a `QT_PLUGIN_PATH` session override.
 
 After the first binary-plugin installation, log out of Plasma and back in once. Then open **Edit Mode → Add Widgets**, search for **Global Menu KDE**, and drag it directly into the existing panel.
 
+## Other distributions
+
+If your distribution is not handled by the automatic dependency mapper, install these requirements using the distribution's normal development packages:
+
+- C++20 compiler and standard build tools;
+- CMake 3.22+ and Ninja;
+- Extra CMake Modules / ECM;
+- Qt 6.6+ Core, DBus, Gui, Quick, Widgets, and Test development files;
+- KF6 Config, I18n, and WindowSystem development files;
+- Plasma 6 development files;
+- Plasma Workspace development files providing `LibTaskManager`.
+
+Then run:
+
+```bash
+bash ./install.sh --no-deps
+```
+
+The source installer is architecture-neutral; the resulting binary plugin is native to the host architecture and local Plasma/Qt ABI.
+
+## Upgrade
+
+From an existing clone:
+
+```bash
+cd global-menu-KDE
+git pull --ff-only
+bash ./install.sh
+```
+
+The new installation replaces the previous plugin and refreshes the persistent uninstall manifest.
+
+## Uninstall
+
+After any installation made by the CLI installer:
+
+```bash
+global-menu-kde-uninstall
+```
+
+From a source checkout you can also use:
+
+```bash
+bash ./install.sh --uninstall
+```
+
+Log out and back in once so Plasma fully unloads the binary plugin.
+
 ## Manual build
+
+For development only:
 
 ```bash
 cmake -S . -B build -G Ninja \
@@ -36,41 +93,10 @@ cmake -S . -B build -G Ninja \
   -DBUILD_TESTING=ON
 cmake --build build --parallel
 ctest --test-dir build --output-on-failure
-sudo cmake --install build
-kbuildsycoca6 --noincremental
 ```
 
-## Upgrade an existing source installation
+For system installation, use `bash ./install.sh` rather than a raw `sudo cmake --install` so dependency auditing and deterministic uninstall metadata are also installed.
 
-```bash
-cd global-menu-KDE
-git pull --ff-only
-bash ./scripts/install-system.sh
-```
+## Legacy user-local builds
 
-Log out and back in if the running Plasma shell still has the older binary plugin loaded.
-
-## Remove legacy user-local builds
-
-Older development versions of this project used a user-local plugin and a session environment hook. The current native rewrite does not need either. The system installer removes only this project's legacy files when detected.
-
-If you previously installed an old build manually, remove the old applet instance from the desktop/panel before adding the current **Global Menu KDE** widget.
-
-## Uninstall
-
-```bash
-bash ./scripts/uninstall-system.sh
-```
-
-Then log out and back in once so Plasma fully unloads the binary plugin.
-
-## Release packages
-
-When a GitHub Release contains validated native assets, install the package matching your distribution and architecture rather than rebuilding from source.
-
-- Debian/Ubuntu family: `.deb`
-- Fedora/RHEL/openSUSE-style RPM family: `.rpm`
-- Arch Linux: `.pkg.tar.zst`
-- Other Plasma 6 distributions: source archive / source build
-
-Do not install a package built for a different distribution family merely because the CPU architecture matches; Plasma/Qt/KF6 binary compatibility matters.
+Older development versions of this project used a user-local plugin and a Plasma session environment hook. The source installer removes only this project's matching legacy files when detected. The current native implementation relies on KDE's normal system plugin discovery under `/usr`.
