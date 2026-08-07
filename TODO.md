@@ -16,6 +16,8 @@
 - [x] Explicit zero-size root and representation layout hints when no active application menu is exported.
 - [x] No persistent placeholder, Apple/system menu, launcher, search, clock, workspace, media/status controls, or synthetic fallback.
 - [x] Compact horizontal desktop-menubar spacing using KDE-native menu hover/pressed states.
+- [x] RTL layout mirroring matching KDE's current AppMenu behavior.
+- [x] Plasmoid activation opens the first exported menu for keyboard/shortcut activation.
 - [x] Static QA guard preventing out-of-scope desktop-bar controls from entering the QML surface.
 - [x] User install and uninstall scripts with Plasma session plugin-path setup.
 - [x] Static source and packaging checks.
@@ -44,7 +46,7 @@
 - [ ] Confirm correct popup placement on top, bottom, left, and right panels.
 - [ ] Confirm registrar behavior while adding, removing, and undo-restoring stock and custom Global Menu widgets.
 - [ ] Confirm Wayland and X11 behavior.
-- [ ] Confirm high-DPI and RTL layouts.
+- [ ] Confirm high-DPI rendering and RTL interaction in a real panel session.
 - [ ] Tune spacing against the supplied reference image at 24, 32, 40, and 48 px panel heights.
 
 ## Follow-up hardening
