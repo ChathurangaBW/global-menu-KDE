@@ -12,9 +12,11 @@
 - [x] Native `QMenu` popup rendering and direct top-level action activation.
 - [x] Disabled actions, check items, contiguous exclusive radio groups, icons, exported keyboard shortcuts, and mnemonics.
 - [x] Incremental `ItemsPropertiesUpdated` handling for non-structural action changes, with full-layout fallback for structural changes.
-- [x] Top-level menu headings only.
-- [x] Complete hiding when no active application menu is exported.
-- [x] No persistent placeholder, Apple menu, search, clock, workspace controls, or synthetic fallback.
+- [x] Top-level application menu headings only.
+- [x] Explicit zero-size root and representation layout hints when no active application menu is exported.
+- [x] No persistent placeholder, Apple/system menu, launcher, search, clock, workspace, media/status controls, or synthetic fallback.
+- [x] Compact horizontal desktop-menubar spacing using KDE-native menu hover/pressed states.
+- [x] Static QA guard preventing out-of-scope desktop-bar controls from entering the QML surface.
 - [x] User install and uninstall scripts with Plasma session plugin-path setup.
 - [x] Static source and packaging checks.
 - [x] Qt shortcut-translation unit tests.
@@ -35,7 +37,7 @@
 - [ ] Install into `~/.local`, log out, and log back in on a real Plasma session.
 - [ ] Confirm the widget has zero panel width on the desktop.
 - [ ] Confirm the widget has zero panel width for Firefox/Electron apps without an export.
-- [ ] Confirm Dolphin shows its exported headings and each command executes.
+- [ ] Confirm Dolphin shows only its exported application-menu headings and each command executes.
 - [ ] Confirm Kate/KWrite submenu, disabled item, check item, radio item, icon, shortcut, and mnemonic behavior.
 - [ ] Confirm hover switching between headings while a popup is open.
 - [ ] Confirm Left/Right keyboard navigation between headings.
