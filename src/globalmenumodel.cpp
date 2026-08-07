@@ -21,6 +21,7 @@
 #include <QKeySequence>
 #include <QMenu>
 #include <QPixmap>
+#include <QSet>
 #include <QVariant>
 
 namespace
@@ -48,9 +49,9 @@ bool boolProperty(const DBusMenuLayoutItem &item, const QString &name, bool defa
     return property(item, name).toBool();
 }
 
-DBusMenuShortcut shortcutProperty(const DBusMenuLayoutItem &item)
+DBusMenuShortcut shortcutProperty(const QVariantMap &properties)
 {
-    const QVariant value = property(item, QStringLiteral("shortcut"));
+    const QVariant value = unwrapped(properties.value(QStringLiteral("shortcut")));
     if (value.metaType() == QMetaType::fromType<DBusMenuShortcut>()) {
         return value.value<DBusMenuShortcut>();
     }
@@ -60,6 +61,11 @@ DBusMenuShortcut shortcutProperty(const DBusMenuLayoutItem &item)
         return shortcut;
     }
     return {};
+}
+
+DBusMenuShortcut shortcutProperty(const DBusMenuLayoutItem &item)
+{
+    return shortcutProperty(item.properties);
 }
 
 QString actionText(QString label)
@@ -208,9 +214,68 @@ void GlobalMenuModel::onLayoutUpdated(uint revision, int parentId)
 
 void GlobalMenuModel::onItemsPropertiesUpdated(const DBusMenuItemList &updated, const DBusMenuItemKeysList &removed)
 {
-    Q_UNUSED(updated)
-    Q_UNUSED(removed)
-    scheduleRefresh();
+    if (m_requestInFlight) {
+        m_refreshQueued = true;
+        return;
+    }
+
+    bool layoutRequired = false;
+    QSet<int> changedIds;
+
+    const auto recordChange = [&layoutRequired, &changedIds](int id, const QString &name) {
+        changedIds.insert(id);
+        if (name == QLatin1String("type")
+            || name == QLatin1String("children-display")
+            || name == QLatin1String("toggle-type")) {
+            layoutRequired = true;
+        }
+    };
+
+    for (const DBusMenuItem &item : updated) {
+        if (!m_actionsById.contains(item.id)) {
+            layoutRequired = true;
+            continue;
+        }
+
+        QVariantMap &properties = m_itemProperties[item.id];
+        for (auto it = item.properties.cbegin(); it != item.properties.cend(); ++it) {
+            properties.insert(it.key(), it.value());
+            recordChange(item.id, it.key());
+        }
+    }
+
+    for (const DBusMenuItemKeys &item : removed) {
+        if (!m_actionsById.contains(item.id)) {
+            layoutRequired = true;
+            continue;
+        }
+
+        QVariantMap &properties = m_itemProperties[item.id];
+        for (const QString &name : item.properties) {
+            properties.remove(name);
+            recordChange(item.id, name);
+        }
+    }
+
+    if (layoutRequired) {
+        scheduleRefresh();
+        return;
+    }
+
+    for (int id : changedIds) {
+        QAction *action = m_actionsById.value(id);
+        if (!action) {
+            continue;
+        }
+        applyActionProperties(id, action);
+
+        const int row = m_topLevelIds.indexOf(id);
+        if (row >= 0) {
+            Q_EMIT dataChanged(index(row, 0), index(row, 0), {LabelRole, ActionRole});
+        }
+    }
+
+    updateMenuAvailability();
 }
 
 void GlobalMenuModel::scheduleRefresh()
@@ -363,6 +428,8 @@ void GlobalMenuModel::clearActions()
         beginResetModel();
     }
 
+    m_actionsById.clear();
+    m_itemProperties.clear();
     qDeleteAll(m_topLevelActions);
     m_topLevelActions.clear();
     m_topLevelIds.clear();
@@ -378,6 +445,8 @@ void GlobalMenuModel::clearActions()
 void GlobalMenuModel::rebuildActions(const DBusMenuLayoutItem &root)
 {
     beginResetModel();
+    m_actionsById.clear();
+    m_itemProperties.clear();
     qDeleteAll(m_topLevelActions);
     m_topLevelActions.clear();
     m_topLevelIds.clear();
@@ -402,43 +471,18 @@ void GlobalMenuModel::rebuildActions(const DBusMenuLayoutItem &root)
     }
 
     endResetModel();
-    setMenuAvailable(!m_topLevelActions.isEmpty());
+    updateMenuAvailability();
 }
 
 QAction *GlobalMenuModel::buildAction(const DBusMenuLayoutItem &item, QObject *owner)
 {
-    auto *action = new QAction(actionText(property(item, QStringLiteral("label")).toString()), owner);
-    action->setVisible(boolProperty(item, QStringLiteral("visible"), true));
-    action->setEnabled(boolProperty(item, QStringLiteral("enabled"), true));
+    auto *action = new QAction(owner);
+    m_actionsById.insert(item.id, action);
+    m_itemProperties.insert(item.id, item.properties);
+    applyActionProperties(item.id, action);
 
-    const QString type = property(item, QStringLiteral("type")).toString();
-    if (type == QLatin1String("separator")) {
-        action->setSeparator(true);
+    if (action->isSeparator()) {
         return action;
-    }
-
-    const QString iconName = property(item, QStringLiteral("icon-name")).toString();
-    if (!iconName.isEmpty()) {
-        action->setIcon(QIcon::fromTheme(iconName));
-    }
-
-    const QByteArray iconData = property(item, QStringLiteral("icon-data")).toByteArray();
-    if (!iconData.isEmpty()) {
-        QPixmap pixmap;
-        if (pixmap.loadFromData(iconData)) {
-            action->setIcon(QIcon(pixmap));
-        }
-    }
-
-    const DBusMenuShortcut shortcut = shortcutProperty(item);
-    if (!shortcut.isEmpty()) {
-        action->setShortcut(shortcut.toKeySequence());
-    }
-
-    const QString toggleType = property(item, QStringLiteral("toggle-type")).toString();
-    if (!toggleType.isEmpty()) {
-        action->setCheckable(true);
-        action->setChecked(property(item, QStringLiteral("toggle-state")).toInt() == 1);
     }
 
     const bool isSubmenu = !item.children.isEmpty()
@@ -483,6 +527,63 @@ QAction *GlobalMenuModel::buildAction(const DBusMenuLayoutItem &item, QObject *o
     }
 
     return action;
+}
+
+void GlobalMenuModel::applyActionProperties(int id, QAction *action)
+{
+    const auto propertiesIt = m_itemProperties.constFind(id);
+    if (propertiesIt == m_itemProperties.cend() || !action) {
+        return;
+    }
+
+    const QVariantMap &properties = propertiesIt.value();
+    const auto value = [&properties](const QString &name) {
+        return unwrapped(properties.value(name));
+    };
+    const auto boolValue = [&properties, &value](const QString &name, bool defaultValue) {
+        return properties.contains(name) ? value(name).toBool() : defaultValue;
+    };
+
+    action->setText(actionText(value(QStringLiteral("label")).toString()));
+    action->setVisible(boolValue(QStringLiteral("visible"), true));
+    action->setEnabled(boolValue(QStringLiteral("enabled"), true));
+    action->setSeparator(value(QStringLiteral("type")).toString() == QLatin1String("separator"));
+
+    QIcon icon;
+    const QString iconName = value(QStringLiteral("icon-name")).toString();
+    if (!iconName.isEmpty()) {
+        icon = QIcon::fromTheme(iconName);
+    }
+
+    const QByteArray iconData = value(QStringLiteral("icon-data")).toByteArray();
+    if (!iconData.isEmpty()) {
+        QPixmap pixmap;
+        if (pixmap.loadFromData(iconData)) {
+            icon = QIcon(pixmap);
+        }
+    }
+    action->setIcon(icon);
+
+    const DBusMenuShortcut shortcut = shortcutProperty(properties);
+    action->setShortcut(shortcut.isEmpty() ? QKeySequence{} : shortcut.toKeySequence());
+
+    const QString toggleType = value(QStringLiteral("toggle-type")).toString();
+    action->setCheckable(!toggleType.isEmpty());
+    if (action->isCheckable()) {
+        action->setChecked(value(QStringLiteral("toggle-state")).toInt() == 1);
+    }
+}
+
+void GlobalMenuModel::updateMenuAvailability()
+{
+    bool available = false;
+    for (QAction *action : std::as_const(m_topLevelActions)) {
+        if (action && action->isVisible() && !action->isSeparator() && !displayText(action->text()).isEmpty()) {
+            available = true;
+            break;
+        }
+    }
+    setMenuAvailable(available);
 }
 
 void GlobalMenuModel::sendEvent(int id, const QString &eventName)
