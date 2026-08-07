@@ -4,11 +4,14 @@ A focused Plasma 6 panel applet that shows only the active application's exporte
 
 ## Scope
 
+This is **not** a full macOS-style desktop bar replacement. It implements only the application-menu group that KDE is missing from the requested panel setup.
+
 - Display exported application headings such as **File**, **Edit**, **View**, **Go**, **Tools**, and **Help**.
 - Use KDE Plasma's existing application-menu registrar and active-window metadata.
-- Hide the applet completely when the active application does not export a menu.
-- Do not add an Apple/system menu, search, workspace controls, clock, persistent placeholder, or synthetic fallback menu.
-- Match a compact native menubar treatment suitable for a Plasma panel.
+- Appear only while the active application exports a menu, for example Dolphin or Kate.
+- Collapse to zero layout size when the desktop or an application without an exported menu is active.
+- Do not add an Apple/system menu, application launcher, search, workspace controls, media/status controls, clock, persistent placeholder, or synthetic fallback menu.
+- Keep a compact desktop-menubar treatment with KDE-native hover/pressed states and denser horizontal spacing.
 
 ## Implemented
 
@@ -19,14 +22,15 @@ A focused Plasma 6 panel applet that shows only the active application's exporte
 - Incremental `ItemsPropertiesUpdated` propagation for labels, visibility, enabled state, icons, shortcuts, and toggle state; structural changes fall back to `GetLayout`.
 - `AboutToShow`, `opened`, `closed`, and `clicked` dbusmenu lifecycle handling.
 - Reference-counted, undo-aware `org.kde.kappmenuview` lifecycle compatible with KDE's stock Global Menu widget.
-- Complete hidden-state behavior when no exported menu is available.
+- Explicit zero-size root and representation layout hints when no exported menu is available.
+- Static QA guards that reject out-of-scope Apple/system/search/workspace/status UI from the QML surface.
 - Static QA, Qt unit tests, fake-exporter integration tests, Plasma 6 release compilation, staged installation, headless applet loading, and prebuilt artifact generation in CI.
 
 ## Automated validation
 
 The CI pipeline validates:
 
-- source structure, scope, protocol behavior, lifecycle safeguards, and packaging assertions;
+- source structure, application-menu-only scope, protocol behavior, lifecycle safeguards, and packaging assertions;
 - ShellCheck for all repository scripts;
 - Qt shortcut-token translation tests;
 - a fake `com.canonical.dbusmenu` exporter in a private D-Bus session;
@@ -104,7 +108,7 @@ Log out and back in after uninstalling so the session plugin path is removed.
 
 ## Expected behavior
 
-The applet should occupy no panel space on the desktop or while focusing an application without an exported menu. It should appear when an exporting application such as Dolphin or Kate is active.
+When Dolphin is active, the applet should show only Dolphin's exported headings such as **File**, **Edit**, **View**, and the rest of its menu bar. When the desktop or an application without a dbusmenu export is active, the applet should occupy no panel space.
 
 ## License
 
