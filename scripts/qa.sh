@@ -19,6 +19,12 @@ assert metadata["X-Plasma-API-Minimum-Version"] == "6.0"
 
 required = [
     "CMakeLists.txt",
+    "README.md",
+    "TODO.md",
+    "docs/global-menu-preview.svg",
+    "docs/INSTALL.md",
+    "docs/QA.md",
+    "docs/ARCHITECTURE.md",
     "src/CMakeLists.txt",
     "src/globalmenuapplet.cpp",
     "src/globalmenumodel.cpp",
@@ -41,6 +47,11 @@ for relative in required:
     assert path.is_file(), f"missing {relative}"
     assert path.read_text(encoding="utf-8").strip(), f"empty {relative}"
 
+readme = (root / "README.md").read_text(encoding="utf-8")
+preview = (root / "docs/global-menu-preview.svg").read_text(encoding="utf-8")
+install_doc = (root / "docs/INSTALL.md").read_text(encoding="utf-8")
+qa_doc = (root / "docs/QA.md").read_text(encoding="utf-8")
+architecture_doc = (root / "docs/ARCHITECTURE.md").read_text(encoding="utf-8")
 main_qml = (root / "src/qml/main.qml").read_text(encoding="utf-8")
 delegate_qml = (root / "src/qml/MenuDelegate.qml").read_text(encoding="utf-8")
 applet_cpp = (root / "src/globalmenuapplet.cpp").read_text(encoding="utf-8")
@@ -59,6 +70,37 @@ uninstaller = (root / "scripts/uninstall-user.sh").read_text(encoding="utf-8")
 prebuilt_installer = (root / "scripts/install-prebuilt.sh").read_text(encoding="utf-8")
 smoke_script = (root / "scripts/smoke-plasmawindowed.sh").read_text(encoding="utf-8")
 
+# README/documentation contract.
+assert "docs/global-menu-preview.svg" in readme
+assert "docs/INSTALL.md" in readme
+assert "docs/QA.md" in readme
+assert "docs/ARCHITECTURE.md" in readme
+assert "File   Edit   View" in readme
+assert "zero panel size" in readme
+assert "Apple/system menu" in readme
+assert "global-menu-kde-plasma6" in readme
+assert "bash ./scripts/install-user.sh" in readme
+assert "bash ./scripts/qa.sh --static" in readme
+
+assert "Application menu only" in preview
+for heading in ("File", "Edit", "View", "Go", "Tools", "Settings", "Help"):
+    assert f">{heading}<" in preview, f"preview missing heading: {heading}"
+assert "Apple" not in preview
+assert "KRunner" not in preview
+assert "Clock" not in preview
+
+assert "bash ./scripts/install-user.sh" in install_doc
+assert "bash ./scripts/uninstall-user.sh" in install_doc
+assert "QT_PLUGIN_PATH" in install_doc
+assert "Global Menu KDE" in install_doc
+assert "bash ./scripts/qa.sh --static" in qa_doc
+assert "Wayland" in qa_doc and "X11" in qa_doc
+assert "docs/global-menu-preview.svg" in qa_doc
+assert "com.canonical.AppMenu.Registrar" in architecture_doc
+assert "GlobalMenuModel" in architecture_doc
+assert "HiddenStatus" in architecture_doc
+
+# QML scope and hidden-state contract.
 assert "HiddenStatus" in main_qml
 assert "hasApplicationMenu" in main_qml
 assert "implicitWidth: root.hasApplicationMenu ? buttonGrid.implicitWidth : 0" in main_qml
@@ -136,6 +178,10 @@ assert "ctest --test-dir build --output-on-failure" in workflow
 assert "run: bash ./scripts/qa.sh --static" in workflow
 assert "scripts/smoke-plasmawindowed.sh" in workflow
 assert "actions/upload-artifact@v4" in workflow
+assert "docs/global-menu-preview.svg" in workflow
+assert "docs/INSTALL.md" in workflow
+assert "docs/QA.md" in workflow
+assert "docs/ARCHITECTURE.md" in workflow
 assert "cancel-in-progress: true" in workflow
 
 assert "plasma-workspace/env" in installer
@@ -153,7 +199,7 @@ assert "dbus-run-session" in smoke_script
 assert "Could not find requested component" in smoke_script
 assert "status" in smoke_script and "124" in smoke_script
 
-print("metadata, application-menu-only scope, protocol, lifecycle, integration, packaging, and applet-load checks passed")
+print("metadata, docs, application-menu-only scope, protocol, lifecycle, integration, packaging, and applet-load checks passed")
 PY
 
 if command -v shellcheck >/dev/null 2>&1; then
