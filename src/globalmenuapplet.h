@@ -3,6 +3,8 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #pragma once
 
+#include "viewservicelease.h"
+
 #include <Plasma/Applet>
 
 #include <QAbstractItemModel>
@@ -46,6 +48,7 @@ private:
     void setCurrentIndex(int index);
     void onMenuAboutToHide();
 
+    ViewServiceLease m_viewServiceLease{this};
     GlobalMenuModel *m_model = nullptr;
     QPointer<QMenu> m_popupMenu;
     QPointer<QMenu> m_sourceMenu;
