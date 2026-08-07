@@ -50,9 +50,10 @@ set(CPACK_STRIP_FILES TRUE)
 
 set(CPACK_DEBIAN_PACKAGE_SECTION "kde")
 set(CPACK_DEBIAN_PACKAGE_PRIORITY "optional")
-set(CPACK_DEBIAN_PACKAGE_DESCRIPTION [=[Native KDE Plasma 6 Global Menu applet with desktop fallback.
- This package provides a native Plasma applet that exports application menus
- to a configurable global menu and supplies a desktop fallback when needed.]=])
+set(CPACK_DEBIAN_PACKAGE_DESCRIPTION [=[This Plasma applet exports the active application's global menu into a
+ configurable global menu bar. When no application exports a menu, a desktop
+ fallback with the usual File/Edit/View/Go/Tools/Settings/Help headings is
+ shown instead.]=])
 set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
 set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
 
@@ -65,5 +66,26 @@ install(
     FILES packaging/debian/copyright
     DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/doc/${CPACK_PACKAGE_NAME}"
 )
+
+# Debian native packages (no "-<revision>" in the version) are required by
+# lintian/policy to ship a compressed changelog even though this project is
+# also released as RPM/Arch packages from the same tree.
+find_program(GZIP_EXECUTABLE gzip)
+if(GZIP_EXECUTABLE)
+    set(DEBIAN_CHANGELOG_GZ "${CMAKE_BINARY_DIR}/changelog.gz")
+    execute_process(
+        COMMAND "${GZIP_EXECUTABLE}" -9 -n -c "${CMAKE_SOURCE_DIR}/packaging/debian/changelog"
+        OUTPUT_FILE "${DEBIAN_CHANGELOG_GZ}"
+        RESULT_VARIABLE GZIP_RESULT
+    )
+    if(NOT GZIP_RESULT EQUAL 0)
+        message(FATAL_ERROR "Failed to compress packaging/debian/changelog")
+    endif()
+    install(
+        FILES "${DEBIAN_CHANGELOG_GZ}"
+        DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/doc/${CPACK_PACKAGE_NAME}"
+        RENAME changelog.gz
+    )
+endif()
 
 include(CPack)
