@@ -23,7 +23,7 @@
 
 | Plasma state | What Global Menu KDE shows |
 | --- | --- |
-| Desktop / no exported application menu | `File  Edit  View  Go  Tools  Settings  Help` |
+| Desktop / no exported application menu | `File   Edit   View   Go   Tools   Settings   Help` |
 | Dolphin/Kate/KWrite/etc. exports a menu | The application's **real KDE global menu** |
 | Application closes / stops exporting | Desktop fallback returns automatically |
 
