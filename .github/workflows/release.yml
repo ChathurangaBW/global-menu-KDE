@@ -77,7 +77,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          qmllint -I /usr/lib/qt6/qml src/qml/*.qml
+          /usr/lib/qt6/bin/qmllint -I /usr/lib/qt6/qml src/qml/*.qml
 
   sanitizer-qa:
     name: ASan + UBSan + D-Bus stress
