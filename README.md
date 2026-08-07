@@ -16,6 +16,7 @@ A focused Plasma 6 panel applet that shows only the active application's exporte
 - Active-window tracking through `LibTaskManager`.
 - Canonical dbusmenu layout import and action activation.
 - Native `QMenu` submenus, disabled actions, check items, exclusive radio groups, icons, exported shortcuts, and mnemonics.
+- Incremental `ItemsPropertiesUpdated` propagation for labels, visibility, enabled state, icons, shortcuts, and toggle state; structural changes fall back to `GetLayout`.
 - `AboutToShow`, `opened`, `closed`, and `clicked` dbusmenu lifecycle handling.
 - Reference-counted, undo-aware `org.kde.kappmenuview` lifecycle compatible with KDE's stock Global Menu widget.
 - Complete hidden-state behavior when no exported menu is available.
@@ -29,7 +30,8 @@ The CI pipeline validates:
 - ShellCheck for all repository scripts;
 - Qt shortcut-token translation tests;
 - a fake `com.canonical.dbusmenu` exporter in a private D-Bus session;
-- layout import, submenu and direct actions, disabled state, `AboutToShow`, `opened`, `closed`, and `clicked` forwarding;
+- layout import, submenu and direct actions, disabled state, incremental property mutation without unnecessary `GetLayout` calls, top-level hidden-state changes, and structural-refresh fallback;
+- `AboutToShow`, `opened`, `closed`, and `clicked` forwarding;
 - Plasma 6 release compilation and linking;
 - staged CMake installation;
 - staged-plugin loading through `plasmawindowed` under Xvfb and a private D-Bus session;
