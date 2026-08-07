@@ -13,6 +13,7 @@ AbstractButton {
     id: control
 
     property bool menuIsOpen: false
+    property bool vertical: false
     signal activated()
 
     hoverEnabled: true
@@ -40,10 +41,16 @@ AbstractButton {
     Kirigami.MnemonicData.controlType: Kirigami.MnemonicData.SecondaryControl
     Kirigami.MnemonicData.label: text
 
-    topPadding: frame.margins.top
-    bottomPadding: frame.margins.bottom
-    leftPadding: Math.max(frame.margins.left, Kirigami.Units.smallSpacing)
-    rightPadding: Math.max(frame.margins.right, Kirigami.Units.smallSpacing)
+    // Keep the strip visually close to a desktop menubar: compact vertically,
+    // but with enough horizontal separation for File / Edit / View / … labels.
+    topPadding: Math.max(frame.margins.top, Kirigami.Units.smallSpacing / 2)
+    bottomPadding: Math.max(frame.margins.bottom, Kirigami.Units.smallSpacing / 2)
+    leftPadding: Math.max(
+        frame.margins.left,
+        control.vertical ? Kirigami.Units.smallSpacing : Kirigami.Units.smallSpacing * 2)
+    rightPadding: Math.max(
+        frame.margins.right,
+        control.vertical ? Kirigami.Units.smallSpacing : Kirigami.Units.smallSpacing * 2)
 
     Accessible.description: qsTr("Open application menu")
 
