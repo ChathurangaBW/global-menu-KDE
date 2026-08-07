@@ -5,92 +5,61 @@
 ![Qt 6](https://img.shields.io/badge/Qt-6-41cd52)
 ![License](https://img.shields.io/badge/license-GPL--2.0--or--later-blue)
 
-A focused **KDE Plasma 6 global application menu** that displays only the active application's exported menu headings in a panel.
+A KDE Plasma 6 **Global Menu applet for an existing Plasma panel** with a desktop fallback menu.
+
+When no application exports a global menu, the applet stays visible as:
 
 ```text
 File   Edit   View   Go   Tools   Settings   Help
 ```
 
-It is intentionally **not** a complete macOS-style top bar replacement. There is no Apple/system menu, launcher, clock, workspace switcher, search, media/status area, or synthetic fallback menu.
+When Dolphin, Kate, KWrite, or another compatible application becomes active, that desktop fallback is automatically replaced by the application's **real exported menu**.
+
+This project does **not** create a second panel and it does not implement a full macOS top bar. It is one Global Menu applet that lives inside the panel you already have.
 
 <p align="center">
-  <img src="docs/global-menu-preview.svg" alt="Global Menu KDE preview showing File, Edit, View, Go, Tools, Settings and Help with the File menu open" width="100%">
+  <img src="docs/global-menu-preview.svg" alt="Global Menu KDE desktop fallback inside an existing Plasma panel" width="100%">
 </p>
 
-## What it does
+## Behavior
 
-| Situation | Result |
+| Situation | What the applet shows |
 | --- | --- |
-| Dolphin/Kate/KWrite or another compatible menu-exporting app is active | The application's real exported headings appear in the panel |
-| The user opens **File**, **Edit**, etc. | A native Qt/KDE `QMenu` popup is shown and actions are sent back to the application |
-| The active application changes | The displayed menu switches to the new application |
-| The desktop or an app without a compatible export is active | The applet enters `HiddenStatus` and collapses to **zero panel size** |
-| KDE's stock Global Menu widget is removed | This applet keeps KDE's menu infrastructure active through an undo-aware view-service lease |
+| Plasma desktop / no compatible application menu | Desktop fallback: **File Edit View Go Tools Settings Help** |
+| Dolphin/Kate/KWrite exports a menu | That application's real menu headings |
+| Active application changes | Menu switches to the newly active application's exported menu |
+| Export disappears or application closes | Desktop fallback returns |
+| Applet is placed in a Plasma panel | Compact menu text only; the applet requests **no separate background** |
 
-## Scope
+## Desktop fallback menus
 
-### Included
+The fallback is not a fake application menu. It exposes desktop-level Plasma actions:
 
-- Active-application tracking through Plasma Workspace `LibTaskManager`.
-- Canonical `com.canonical.dbusmenu` layout import over QtDBus.
-- Top-level headings only: **File**, **Edit**, **View**, **Go**, **Tools**, **Settings**, **Help**, and whatever else the application exports.
-- Native `QMenu` popups and submenus.
-- Disabled actions.
-- Checkable actions and exclusive radio groups.
-- Theme icons and exported raw icon data.
-- Exported keyboard shortcuts.
-- Alt mnemonics.
-- Hover switching while a menu is open.
-- Left/Right keyboard navigation between headings.
-- Direct top-level actions.
-- Incremental `ItemsPropertiesUpdated` handling without unnecessary complete menu reloads.
-- RTL layout mirroring.
-- Explicit zero-size hidden state.
+- **File** — Home Folder, Documents, Downloads, Trash
+- **Edit** — Clipboard History
+- **View** — Show Desktop, Restore Windows
+- **Go** — Home, Documents, Downloads, Trash
+- **Tools** — Run Command, Konsole, System Monitor
+- **Settings** — System Settings
+- **Help** — KDE Help Center
 
-### Deliberately not included
+When a real application menu is available, these fallback menus disappear and the application's own `dbusmenu` hierarchy takes over.
 
-- Apple/system menu.
-- Application launcher.
-- KRunner/search box.
-- Workspace indicator/switcher.
-- Clock or calendar.
-- Media controls.
-- System tray or status controls.
-- Synthetic fallback application actions.
-- A placeholder when no menu is available.
+## What is deliberately not included
 
-The repository QA contains guards that reject these out-of-scope UI elements from the applet surface.
+- No Apple/system menu.
+- No second Plasma panel.
+- No application launcher.
+- No clock/calendar.
+- No workspace switcher.
+- No media/status area.
+- No synthetic replacement for an application's real menu when one is exported.
 
 ---
 
-## Quick installation
+## Installation
 
-### Prebuilt GitHub Actions artifact
-
-Every successful CI run publishes an artifact named **`global-menu-kde-plasma6`**.
-
-1. Open **Actions → CI** in this repository.
-2. Open the latest successful run.
-3. Download `global-menu-kde-plasma6`.
-4. Extract the ZIP and then the contained tarball:
-
-   ```bash
-   tar -xzf global-menu-kde-plasma6.tar.gz
-   ```
-
-5. Install it:
-
-   ```bash
-   bash ./install.sh
-   ```
-
-6. **Log out and log back in.**
-7. Add **Global Menu KDE** to a Plasma panel.
-8. Remove KDE's stock **Global Menu** widget if you do not want two menu widgets.
-
-> The prebuilt artifact is compiled on current Arch Linux x86-64. On distributions with different Qt/KF6/Plasma library versions, build from source instead.
-
-### Build and install from source
+### Build from source — recommended for KDE neon and other non-Arch systems
 
 ```bash
 git clone https://github.com/ChathurangaBW/global-menu-KDE.git
@@ -98,11 +67,37 @@ cd global-menu-KDE
 bash ./scripts/install-user.sh
 ```
 
-The installer configures a Release build, compiles the applet, runs the Qt test suite, installs under `~/.local`, and creates the Plasma-session `QT_PLUGIN_PATH` hook required for the compiled plugin.
+The installer:
 
-After installation, **log out and back in** before adding the widget.
+1. Configures a Release build.
+2. Compiles the applet.
+3. Runs the lightweight unit/AppStream tests.
+4. Skips the private-D-Bus integration harness during normal live installation so KDE neon/unstable cannot hang on test teardown.
+5. Installs under `~/.local` by default.
+6. Creates the Plasma-session `QT_PLUGIN_PATH` hook needed for the compiled applet plugin.
 
-Full installation details and troubleshooting: **[docs/INSTALL.md](docs/INSTALL.md)**.
+To explicitly run the integration test during installation:
+
+```bash
+RUN_INTEGRATION_TESTS=1 bash ./scripts/install-user.sh
+```
+
+After installation, **log out and log back in**, then add **Global Menu KDE** to your existing Plasma panel.
+
+Remove KDE's stock **Global Menu** widget if both are present.
+
+Full details: **[docs/INSTALL.md](docs/INSTALL.md)**.
+
+### Prebuilt GitHub Actions artifact
+
+Every successful CI run publishes `global-menu-kde-plasma6` containing:
+
+- the compiled Plasma applet;
+- `install.sh`;
+- `uninstall.sh`;
+- README and documentation.
+
+The prebuilt binary is compiled on current Arch Linux x86-64. Other distributions should normally build from source to match their Qt/KF6/Plasma ABI.
 
 ---
 
@@ -111,92 +106,91 @@ Full installation details and troubleshooting: **[docs/INSTALL.md](docs/INSTALL.
 | Component | Requirement |
 | --- | --- |
 | Desktop | KDE Plasma 6 |
-| Qt | Qt 6.6 or newer |
+| Qt | Qt 6.6+ |
 | KDE Frameworks | KF6 |
 | Build system | CMake + Extra CMake Modules |
 | Active-window integration | Plasma Workspace `LibTaskManager` |
-| Display session | Wayland or X11 |
+| Session | Wayland or X11 |
 
-The CI build currently uses these Arch Linux packages:
+CI currently builds with current Arch Linux packages including `qt6-base`, `qt6-declarative`, `kconfig`, `kcoreaddons`, `ki18n`, `kwindowsystem`, `libplasma`, and `plasma-workspace`.
+
+---
+
+## Architecture
 
 ```text
-base-devel
-cmake
-ninja
-extra-cmake-modules
-qt6-base
-qt6-declarative
-kconfig
-kcoreaddons
-ki18n
-kwindowsystem
-libplasma
-plasma-workspace
-xorg-server-xvfb
+                    ┌───────────────────────────────┐
+                    │       DisplayMenuModel        │
+                    │                               │
+                    │ app menu available?           │
+                    │   yes ───────────────┐        │
+                    │   no  ── desktop ─┐  │        │
+                    └────────────────────┼──┼────────┘
+                                         │  │
+                    desktop fallback ◄───┘  │
+                                            ▼
+Active application ──► KDE AppMenu registrar ──► GlobalMenuModel
+                                            │
+                                            ▼
+                                      QAction / QMenu
+                                            │
+                                            ▼
+                                      GlobalMenuApplet
+                                            │
+                                            ▼
+                               existing Plasma panel surface
 ```
 
-Package names vary by distribution.
+### Application menu path
+
+1. `LibTaskManager` tracks the active application.
+2. KDE provides `com.canonical.AppMenu.Registrar`.
+3. The applet reads the active window's menu service/object path.
+4. `GlobalMenuModel` imports `com.canonical.dbusmenu` with `GetLayout`.
+5. Menu clicks are returned to the application through `Event`.
+
+### Desktop fallback path
+
+When no usable exported application menu exists, `DisplayMenuModel` serves seven local top-level menus instead. As soon as a real application menu becomes available, the display model resets to the real menu automatically.
+
+The project does **not** take ownership of `com.canonical.AppMenu.Registrar`; KDE already owns that integration point.
+
+More details: **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**.
 
 ---
 
-## How it works
+## Panel presentation
 
-```text
-Active application
-      │
-      │ exports Canonical dbusmenu
-      ▼
-KDE's com.canonical.AppMenu.Registrar
-      │
-      │ menu service + object path
-      ▼
-GlobalMenuModel
-      │
-      ├─ LibTaskManager active-window tracking
-      ├─ QtDBus GetLayout / AboutToShow / Event
-      ├─ QAction / QMenu model
-      └─ incremental property updates
-      │
-      ▼
-GlobalMenuApplet
-      │
-      ├─ popup positioning
-      ├─ menu switching
-      └─ keyboard navigation
-      │
-      ▼
-QML panel surface
+The applet is intentionally compact:
 
-File   Edit   View   Go   Tools   Settings   Help
-```
+- `Plasmoid.backgroundHints: NoBackground`
+- no `CanFillArea` constraint
+- width follows the menu content
+- KDE menubar hover/pressed styling is used only on individual menu items
 
-The project does **not** take ownership of `com.canonical.AppMenu.Registrar`; KDE already provides that service. Competing for it would break normal Plasma/Qt global-menu integration.
-
-Technical details: **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**.
+So the menu should appear as part of the **existing Plasma panel**, not as the wide standalone dark rectangle shown by the earlier incorrect implementation.
 
 ---
 
-## dbusmenu behavior
+## dbusmenu support
 
-The importer supports the menu state expected from Qt/KDE application exporters:
+For real application menus, the importer handles:
 
-- `GetLayout` for the exported menu tree;
-- `AboutToShow` before opening lazily populated menus;
-- `opened` and `closed` lifecycle events;
-- `clicked` action events;
-- label/visibility/enabled changes;
-- toggle/check/radio state;
-- theme icons and raw `icon-data`;
-- exported keyboard shortcuts;
-- structural refresh fallback when menu hierarchy changes.
-
-Asynchronous layout replies are guarded with a source generation counter so a delayed reply from the previously active application cannot overwrite the current application's menu.
+- `GetLayout`
+- `AboutToShow`
+- `opened`, `closed`, and `clicked`
+- submenus
+- disabled actions
+- check/radio actions
+- icons and raw `icon-data`
+- exported shortcuts
+- incremental `ItemsPropertiesUpdated`
+- structural fallback reloads
+- stale asynchronous-reply protection when the active application changes
 
 ---
 
-## Build and test
-
-### Standard CMake build
+## Build and QA
 
 ```bash
 cmake -S . -B build \
@@ -206,110 +200,69 @@ cmake --build build --parallel
 ctest --test-dir build --output-on-failure
 ```
 
-### Repository QA
-
-Static checks only:
+Static repository QA:
 
 ```bash
 bash ./scripts/qa.sh --static
 ```
 
-Full local QA:
+Full QA:
 
 ```bash
 bash ./scripts/qa.sh
 ```
 
-The full path also attempts a `plasmawindowed` applet-load smoke test when suitable Plasma/display tooling is available.
+The integration test verifies:
 
-Detailed validation matrix and real-desktop checklist: **[docs/QA.md](docs/QA.md)**.
+- seven desktop fallback headings when no app menu exists;
+- automatic application takeover when a dbusmenu appears;
+- return to the fallback when the app menu disappears;
+- real dbusmenu layout/action/lifecycle behavior.
 
----
-
-## Automated QA status
-
-GitHub Actions validates the implementation at several layers:
-
-| Layer | Coverage |
-| --- | --- |
-| Static QA | metadata, menu-only scope, hidden-state sizing, protocol guards, packaging assumptions, ShellCheck |
-| Qt unit tests | dbusmenu shortcut token translation |
-| Fake-exporter integration | private D-Bus session, layout import, direct/submenu actions, disabled state, lifecycle events, incremental updates |
-| Plasma 6 build | current Arch Linux Qt/KF6/Plasma release build and link |
-| Installation | staged CMake install |
-| QML/plugin loading | `plasmawindowed` under Xvfb/private D-Bus |
-| Packaging | installable `global-menu-kde-plasma6` artifact |
-
-Real desktop interaction remains a separate release checklist because CI cannot reproduce a user's complete Plasma panel/session environment. See **[docs/QA.md](docs/QA.md)** and **[TODO.md](TODO.md)**.
-
----
-
-## Expected desktop behavior
-
-### Compatible application active
-
-Dolphin, Kate, KWrite, and other applications that export a compatible application menu should show their headings in the panel.
-
-Example:
-
-```text
-File   Edit   View   Go   Tools   Settings   Help
-```
-
-Clicking a heading opens the application's real menu; selecting an item executes it in that application.
-
-### No compatible menu export
-
-The applet should occupy no visible panel width. It does not display `Global Menu KDE`, an icon, an ellipsis, or a fallback menu.
-
-Firefox, Electron applications, sandboxed applications, or other software may not expose a compatible dbusmenu depending on their toolkit/build/session integration. In that case, hidden state is expected.
+Detailed QA matrix: **[docs/QA.md](docs/QA.md)**.
 
 ---
 
 ## Troubleshooting
 
-### Widget does not appear in the widget picker
+### KDE neon / unstable installer appeared to stop at `dbusmenumodel_test`
 
-The project is a compiled Plasma plugin. After installation, **log out and log back in** so Plasma starts with the installer-generated plugin search path.
-
-Check:
+Pull current `main` and run the installer again:
 
 ```bash
-cat "$HOME/.config/plasma-workspace/env/global-menu-kde.sh"
-find "$HOME/.local" -path '*org.chathuranga.globalmenu.so' -print
+git pull --ff-only
+bash ./scripts/install-user.sh
 ```
 
-### Widget appears but shows nothing
+Normal installation no longer waits on that private-D-Bus integration harness. CI/full QA still runs it with a hard timeout.
 
-Test with Dolphin or Kate. Empty/zero-width state is intentional when the active application does not export a compatible menu.
+### Widget shows as a separate large desktop rectangle
+
+Use **Global Menu KDE inside a Plasma panel**. Current QML also requests `NoBackground` and no fill-area behavior, so it does not create its own panel surface.
+
+### Desktop fallback is visible even with no application open
+
+That is the intended behavior.
+
+### Dolphin/Kate becomes active
+
+The fallback should be replaced by Dolphin/Kate's real menu. If it is not, see **[docs/QA.md](docs/QA.md)** for registrar/dbus checks.
 
 ### Two global menus are visible
 
-Remove KDE's stock **Global Menu** widget from the panel and keep **Global Menu KDE**.
-
-### `LibTaskManager` cannot be found while building
-
-Install the Plasma Workspace development package supplied by your distribution.
-
-More troubleshooting: **[docs/INSTALL.md](docs/INSTALL.md#troubleshooting)**.
+Remove KDE's stock **Global Menu** widget and keep **Global Menu KDE**.
 
 ---
 
 ## Uninstall
 
-Source installation:
+Source install:
 
 ```bash
 bash ./scripts/uninstall-user.sh
 ```
 
-Prebuilt artifact:
-
-```bash
-bash ./uninstall.sh
-```
-
-Log out and back in after uninstalling so the Plasma session no longer uses the plugin path hook.
+Then log out and log back in.
 
 ---
 
@@ -317,32 +270,29 @@ Log out and back in after uninstalling so the Plasma session no longer uses the 
 
 ```text
 .
-├── src/                    Plasma applet, model, dbusmenu client and QML
-├── tests/                  Qt unit + fake-exporter integration tests
-├── scripts/                install, uninstall, QA and smoke-test tooling
+├── src/
+│   ├── globalmenumodel.*       real application dbusmenu importer
+│   ├── displaymenumodel.*      desktop fallback + app-menu switch
+│   ├── globalmenuapplet.*      popup/panel controller
+│   └── qml/                    compact panel UI
+├── tests/                      Qt + fake dbusmenu integration tests
+├── scripts/                    build/install/QA helpers
 ├── docs/
 │   ├── global-menu-preview.svg
 │   ├── INSTALL.md
 │   ├── QA.md
 │   └── ARCHITECTURE.md
-├── .github/workflows/ci.yml
 ├── TODO.md
 └── README.md
 ```
 
----
-
 ## Documentation
 
-- **[Installation and troubleshooting](docs/INSTALL.md)**
-- **[QA and release validation](docs/QA.md)**
+- **[Installation](docs/INSTALL.md)**
+- **[QA](docs/QA.md)**
 - **[Architecture](docs/ARCHITECTURE.md)**
 - **[Development checklist](TODO.md)**
 
----
-
 ## License
 
-GPL-2.0-or-later.
-
-The small dbusmenu serialization/shortcut component is LGPL-2.0-or-later. Individual source files contain SPDX identifiers.
+GPL-2.0-or-later. Individual source files contain SPDX identifiers.
