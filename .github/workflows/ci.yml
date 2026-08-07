@@ -50,7 +50,7 @@ jobs:
       - name: Stage install
         run: DESTDIR="$GITHUB_WORKSPACE/stage" cmake --install build
 
-      - name: Verify native Plasma plugin layout
+      - name: Verify staged Plasma plugin layout
         run: |
           plugin=$(find "$GITHUB_WORKSPACE/stage/usr" -type f -name 'org.chathuranga.globalmenu.so' -print -quit)
           test -n "$plugin"
@@ -68,12 +68,44 @@ jobs:
             if plasmawindowed --help 2>&1 | grep -q -- "--smoke-test"; then
               plasmawindowed --smoke-test org.chathuranga.globalmenu
             else
-              timeout 8s plasmawindowed org.chathuranga.globalmenu >/tmp/plasmawindowed.log 2>&1 || code=$?
+              timeout 8s plasmawindowed org.chathuranga.globalmenu >/tmp/plasmawindowed-stage.log 2>&1 || code=$?
               code=${code:-0}
               if [[ $code -ne 0 && $code -ne 124 ]]; then
-                cat /tmp/plasmawindowed.log
+                cat /tmp/plasmawindowed-stage.log
                 exit $code
               fi
-              ! grep -Eiq "failed to load|plugin.*not found|module .* is not installed|QQmlApplicationEngine failed" /tmp/plasmawindowed.log
+              ! grep -Eiq "failed to load|plugin.*not found|module .* is not installed|QQmlApplicationEngine failed" /tmp/plasmawindowed-stage.log
+            fi
+          '
+
+      - name: Install into native system plugin path
+        run: |
+          cmake --install build
+          plugin=$(find /usr -type f -name 'org.chathuranga.globalmenu.so' -print -quit)
+          test -n "$plugin"
+          printf 'Native plugin: %s\n' "$plugin"
+          ldd "$plugin" | tee /tmp/system-ldd.txt
+          ! grep -q 'not found' /tmp/system-ldd.txt
+          if command -v kbuildsycoca6 >/dev/null 2>&1; then
+            kbuildsycoca6 --noincremental
+          fi
+
+      - name: Discover and load system applet with no plugin-path override
+        run: |
+          unset QT_PLUGIN_PATH
+          export QT_QPA_PLATFORM=xcb
+          dbus-run-session -- xvfb-run -a bash -euo pipefail -c '
+            test -z "${QT_PLUGIN_PATH:-}"
+            if plasmawindowed --help 2>&1 | grep -q -- "--smoke-test"; then
+              plasmawindowed --smoke-test org.chathuranga.globalmenu
+            else
+              timeout 8s plasmawindowed org.chathuranga.globalmenu >/tmp/plasmawindowed-system.log 2>&1 || code=$?
+              code=${code:-0}
+              if [[ $code -ne 0 && $code -ne 124 ]]; then
+                cat /tmp/plasmawindowed-system.log
+                exit $code
+              fi
+              cat /tmp/plasmawindowed-system.log
+              ! grep -Eiq "failed to load|plugin.*not found|module .* is not installed|QQmlApplicationEngine failed" /tmp/plasmawindowed-system.log
             fi
           '
