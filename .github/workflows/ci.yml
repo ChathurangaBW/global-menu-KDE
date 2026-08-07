@@ -48,9 +48,9 @@ jobs:
       - name: Install into staging prefix
         run: cmake --install build --prefix "$GITHUB_WORKSPACE/stage"
       - name: Smoke-test Plasma applet loading
-        env:
-          QT_PLUGIN_PATH: ${{ github.workspace }}/stage/lib/qt6/plugins
-        run: bash ./scripts/smoke-plasmawindowed.sh org.chathuranga.globalmenu
+        run: |
+          QT_PLUGIN_PATH="$GITHUB_WORKSPACE/stage/lib/qt6/plugins" \
+              bash ./scripts/smoke-plasmawindowed.sh org.chathuranga.globalmenu
       - name: Add artifact installation helpers
         run: |
           install -m0755 scripts/install-prebuilt.sh stage/install.sh
