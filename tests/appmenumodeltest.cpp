@@ -16,7 +16,6 @@ namespace
 {
 constexpr auto menuPath = "/com/example/GlobalMenu";
 constexpr auto menuInterface = "com.canonical.dbusmenu";
-constexpr auto menuService = "org.chathuranga.GlobalMenuKDE.Test";
 
 DBusMenuLayoutItem item(int id, const QString &label, bool submenu = false)
 {
@@ -86,6 +85,7 @@ public:
         }
 
         if (message.member() == QLatin1String("GetLayout")) {
+            ++getLayoutCalls;
             const int parentId = message.arguments().at(0).toInt();
             DBusMenuLayoutItem root;
             root.id = parentId;
@@ -124,6 +124,7 @@ public:
         return false;
     }
 
+    int getLayoutCalls = 0;
     QList<int> aboutToShowIds;
     QList<Event> events;
 };
@@ -141,7 +142,6 @@ void AppMenuModelTest::fallbackApplicationFallback()
 {
     QDBusConnection connection = QDBusConnection::sessionBus();
     QVERIFY(connection.isConnected());
-    QVERIFY(connection.registerService(QString::fromLatin1(menuService)));
 
     FakeMenuObject fakeMenu;
     QVERIFY(connection.registerVirtualObject(QString::fromLatin1(menuPath), &fakeMenu, QDBusConnection::SingleNode));
@@ -164,8 +164,12 @@ void AppMenuModelTest::fallbackApplicationFallback()
         QCOMPARE(plainLabel(model.data(model.index(row, 0), AppMenuModel::MenuRole).toString()), desktopHeadings.at(row));
     }
 
-    model.updateApplicationMenu(QString::fromLatin1(menuService), QString::fromLatin1(menuPath));
+    // Use the connection's unique service name for a same-process fixture.
+    // This mirrors Qt's proven self-hosted D-Bus test pattern and avoids
+    // well-known-name loopback quirks that do not exist for real applications.
+    model.updateApplicationMenu(connection.baseService(), QString::fromLatin1(menuPath));
 
+    QTRY_VERIFY_WITH_TIMEOUT(fakeMenu.getLayoutCalls > 0, 5000);
     QTRY_VERIFY_WITH_TIMEOUT(!model.usingDesktopFallback(), 5000);
     QTRY_VERIFY_WITH_TIMEOUT(model.rowCount() >= 2, 5000);
     QCOMPARE(plainLabel(model.data(model.index(0, 0), AppMenuModel::MenuRole).toString()), QStringLiteral("File"));
@@ -187,7 +191,9 @@ void AppMenuModelTest::fallbackApplicationFallback()
     aboutAction->trigger();
     QTRY_VERIFY_WITH_TIMEOUT(fakeMenu.hasEvent(2, QStringLiteral("clicked")), 5000);
 
-    QVERIFY(connection.unregisterService(QString::fromLatin1(menuService)));
+    // Clearing the active application's exported menu must restore the desktop
+    // fallback immediately; service disappearance takes this same model path.
+    model.updateApplicationMenu(QString(), QString());
     QTRY_VERIFY_WITH_TIMEOUT(model.usingDesktopFallback(), 5000);
     QTRY_COMPARE_WITH_TIMEOUT(model.rowCount(), 7, 5000);
 
