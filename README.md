@@ -23,6 +23,7 @@ This is **not** a full macOS-style desktop bar replacement. It implements only t
 - `AboutToShow`, `opened`, `closed`, and `clicked` dbusmenu lifecycle handling.
 - Reference-counted, undo-aware `org.kde.kappmenuview` lifecycle compatible with KDE's stock Global Menu widget.
 - Explicit zero-size root and representation layout hints when no exported menu is available.
+- RTL layout mirroring and plasmoid keyboard activation aligned with KDE's current AppMenu behavior.
 - Static QA guards that reject out-of-scope Apple/system/search/workspace/status UI from the QML surface.
 - Static QA, Qt unit tests, fake-exporter integration tests, Plasma 6 release compilation, staged installation, headless applet loading, and prebuilt artifact generation in CI.
 
@@ -36,6 +37,7 @@ The CI pipeline validates:
 - a fake `com.canonical.dbusmenu` exporter in a private D-Bus session;
 - layout import, submenu and direct actions, disabled state, incremental property mutation without unnecessary `GetLayout` calls, top-level hidden-state changes, and structural-refresh fallback;
 - `AboutToShow`, `opened`, `closed`, and `clicked` forwarding;
+- RTL layout and keyboard-activation code paths through static guards and QML loading;
 - Plasma 6 release compilation and linking;
 - staged CMake installation;
 - staged-plugin loading through `plasmawindowed` under Xvfb and a private D-Bus session;
