@@ -3,11 +3,16 @@
 
 #include "globalmenumodel.h"
 
+#include <tasksmodel.h>
+
 #include <QAction>
+#include <QCoreApplication>
 #include <QDBusConnection>
 #include <QDBusMessage>
 #include <QDBusVirtualObject>
+#include <QEventLoop>
 #include <QMenu>
+#include <QObject>
 #include <QTest>
 #include <QVariant>
 
@@ -81,6 +86,8 @@ public:
         }
 
         if (message.member() == QLatin1String("GetLayout")) {
+            ++getLayoutCalls;
+
             DBusMenuLayoutItem root;
             root.id = 0;
 
@@ -119,6 +126,7 @@ public:
         return false;
     }
 
+    int getLayoutCalls = 0;
     QList<int> aboutToShowIds;
     QList<Event> events;
 };
@@ -144,8 +152,12 @@ void GlobalMenuModelTest::importsLayoutAndForwardsEvents()
         QDBusConnection::SingleNode));
 
     GlobalMenuModel model;
+    QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
+    QObject::disconnect(model.m_tasksModel, nullptr, &model, nullptr);
+    model.m_tasksModel->blockSignals(true);
     model.setSource(connection.baseService(), QString::fromLatin1(menuPath));
 
+    QTRY_VERIFY_WITH_TIMEOUT(fakeMenu.getLayoutCalls > 0, 5000);
     QTRY_COMPARE_WITH_TIMEOUT(model.rowCount(), 2, 5000);
     QVERIFY(model.menuAvailable());
     QCOMPARE(model.data(model.index(0, 0), GlobalMenuModel::LabelRole).toString(), QStringLiteral("File"));
