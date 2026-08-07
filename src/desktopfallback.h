@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <QDBusPendingCall>
 #include <QObject>
 #include <memory>
 
