@@ -85,6 +85,10 @@ GlobalMenuApplet::GlobalMenuApplet(QObject *parent, const KPluginMetaData &data,
         if (m_popupMenu) {
             m_popupMenu->hide();
         }
+        // A reset can destroy the source dbusmenu. Return any actions that are
+        // parked in the reusable popup before the source model changes.
+        restoreSourceMenu();
+        m_sourceMenu = nullptr;
     });
 }
 
@@ -139,6 +143,14 @@ void GlobalMenuApplet::restoreSourceMenu()
         return;
     }
 
+    // While a menu is open, the source menu's menuAction is temporarily wired
+    // to m_popupMenu. Restore that relationship before moving actions home.
+    // This mirrors Plasma's proven appmenu workaround and, critically, is only
+    // done after activation/hide processing has completed or when switching
+    // source menus. Mutating the action list from aboutToHide can swallow the
+    // QAction::triggered delivery for submenu items.
+    m_popupMenu->menuAction()->setMenu(m_sourceMenu);
+
     const QList<QAction *> actions = m_popupMenu->actions();
     for (QAction *action : actions) {
         m_popupMenu->removeAction(action);
@@ -170,7 +182,12 @@ void GlobalMenuApplet::trigger(QQuickItem *contextItem, int index)
         return;
     }
 
-    if (requestedSourceMenu->isEmpty()) {
+    // On a second opening of the same top-level menu, its actions intentionally
+    // remain parked in m_popupMenu. Do not mistake the now-empty source menu for
+    // a genuinely empty application menu.
+    const bool popupOwnsRequestedActions =
+        m_popupMenu && m_sourceMenu == requestedSourceMenu && !m_popupMenu->isEmpty();
+    if (requestedSourceMenu->isEmpty() && !popupOwnsRequestedActions) {
         return;
     }
 
@@ -185,14 +202,22 @@ void GlobalMenuApplet::trigger(QQuickItem *contextItem, int index)
     }
 
     if (m_sourceMenu != requestedSourceMenu) {
+        // Switching top-level menus is the safe point to return the previous
+        // menu's actions. Never do this from aboutToHide while Qt is still
+        // dispatching the selected QAction.
         restoreSourceMenu();
         m_sourceMenu = requestedSourceMenu;
-        const QList<QAction *> actions = m_sourceMenu->actions();
-        for (QAction *action : actions) {
-            m_sourceMenu->removeAction(action);
-            m_popupMenu->addAction(action);
-        }
     }
+
+    // Move any source actions into the reusable popup and temporarily make the
+    // source menuAction point at that popup. This is the same lifecycle used by
+    // Plasma's stock Global Menu applet and keeps QAction activation intact.
+    const QList<QAction *> actions = m_sourceMenu->actions();
+    for (QAction *action : actions) {
+        m_sourceMenu->removeAction(action);
+        m_popupMenu->addAction(action);
+    }
+    m_sourceMenu->menuAction()->setMenu(m_popupMenu);
 
     QTimer::singleShot(0, contextItem, [contextItem] {
         if (contextItem && contextItem->window() && contextItem->window()->mouseGrabberItem()) {
@@ -249,8 +274,17 @@ void GlobalMenuApplet::onMenuAboutToHide()
     if (m_currentIndex >= 0 && m_model) {
         m_model->menuClosed(m_currentIndex);
     }
-    restoreSourceMenu();
-    m_sourceMenu = nullptr;
+
+    // Do not move actions here. aboutToHide is emitted while QMenu can still be
+    // completing activation of the clicked item; changing the action list at
+    // this point can make every submenu entry appear to click but do nothing.
+    // Only restore the menuAction association. The actions stay in the reusable
+    // popup until this menu is reopened, another top-level menu is selected, or
+    // the source model is reset.
+    if (m_popupMenu && m_sourceMenu) {
+        m_popupMenu->menuAction()->setMenu(m_sourceMenu);
+    }
+
     setCurrentIndex(-1);
 }
 
