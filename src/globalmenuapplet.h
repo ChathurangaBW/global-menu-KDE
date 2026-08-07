@@ -10,6 +10,7 @@
 #include <QAbstractItemModel>
 #include <QPointer>
 
+class DisplayMenuModel;
 class GlobalMenuModel;
 class QAction;
 class QMenu;
@@ -49,7 +50,8 @@ private:
     void onMenuAboutToHide();
 
     ViewServiceLease m_viewServiceLease{this};
-    GlobalMenuModel *m_model = nullptr;
+    GlobalMenuModel *m_applicationModel = nullptr;
+    DisplayMenuModel *m_model = nullptr;
     QPointer<QMenu> m_popupMenu;
     QPointer<QMenu> m_sourceMenu;
     QPointer<QQuickItem> m_buttonGrid;
