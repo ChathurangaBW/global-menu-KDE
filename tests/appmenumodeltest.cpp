@@ -151,6 +151,15 @@ void AppMenuModelTest::fallbackApplicationFallback()
     QVERIFY(model.usingDesktopFallback());
     QCOMPARE(model.rowCount(), 7);
 
+    // This is a model/importer integration test, not an active-window test.
+    // In a headless session LibTaskManager has no real active task and may emit
+    // changes that correctly select the desktop fallback. Isolate those live
+    // signals before manually injecting the fake application's menu source.
+    auto *tasksModel = model.findChild<TaskManager::TasksModel *>();
+    QVERIFY(tasksModel);
+    QObject::disconnect(tasksModel, nullptr, &model, nullptr);
+    tasksModel->blockSignals(true);
+
     const QStringList desktopHeadings = {
         QStringLiteral("File"),
         QStringLiteral("Edit"),
@@ -165,8 +174,6 @@ void AppMenuModelTest::fallbackApplicationFallback()
     }
 
     // Use the connection's unique service name for a same-process fixture.
-    // This mirrors Qt's proven self-hosted D-Bus test pattern and avoids
-    // well-known-name loopback quirks that do not exist for real applications.
     model.updateApplicationMenu(connection.baseService(), QString::fromLatin1(menuPath));
 
     QTRY_VERIFY_WITH_TIMEOUT(fakeMenu.getLayoutCalls > 0, 5000);
@@ -191,8 +198,6 @@ void AppMenuModelTest::fallbackApplicationFallback()
     aboutAction->trigger();
     QTRY_VERIFY_WITH_TIMEOUT(fakeMenu.hasEvent(2, QStringLiteral("clicked")), 5000);
 
-    // Clearing the active application's exported menu must restore the desktop
-    // fallback immediately; service disappearance takes this same model path.
     model.updateApplicationMenu(QString(), QString());
     QTRY_VERIFY_WITH_TIMEOUT(model.usingDesktopFallback(), 5000);
     QTRY_COMPARE_WITH_TIMEOUT(model.rowCount(), 7, 5000);
