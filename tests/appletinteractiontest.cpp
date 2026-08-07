@@ -4,8 +4,11 @@
 #include "displaymenumodel.h"
 #include "globalmenuapplet.h"
 
+#include <KPluginMetaData>
+
 #include <QAction>
 #include <QDesktopServices>
+#include <QDir>
 #include <QFile>
 #include <QFileInfo>
 #include <QMenu>
