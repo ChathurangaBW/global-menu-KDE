@@ -16,16 +16,20 @@ concurrency:
   group: native-global-menu-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  CMAKE_BUILD_PARALLEL_LEVEL: 2
+
 jobs:
   plasma6:
+    name: Arch Plasma 6 full smoke
     runs-on: ubuntu-latest
     container: archlinux:latest
-    timeout-minutes: 45
+    timeout-minutes: 50
     steps:
       - name: Install Plasma 6 build/runtime dependencies
         run: >-
           pacman -Syu --noconfirm
-          git base-devel sudo shellcheck cmake ninja extra-cmake-modules
+          git base-devel sudo shellcheck python cmake ninja extra-cmake-modules
           qt6-base qt6-declarative
           kconfig kcoreaddons ki18n kwindowsystem
           libplasma plasma-workspace xorg-server-xvfb dbus file
@@ -35,15 +39,49 @@ jobs:
       - name: Trust checkout directory
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
-      - name: Validate repository and installer scripts
+      - name: Static repository and installer QA
+        shell: bash
         run: |
+          set -euo pipefail
           git diff --check
+          test -s README.md
+          test -s LICENSE
+          python -m json.tool src/metadata.json >/dev/null
           bash -n install.sh scripts/*.sh
           shellcheck install.sh scripts/*.sh
+
+          cmake_version=$(sed -n 's/^project(global-menu-kde VERSION \([^ ]*\).*/\1/p' CMakeLists.txt)
+          metadata_version=$(python -c 'import json; print(json.load(open("src/metadata.json"))["KPlugin"]["Version"])')
+          test -n "$cmake_version"
+          test "$cmake_version" = "$metadata_version"
+
+          status=0
+          while IFS= read -r file; do
+            if ! grep -q 'SPDX-License-Identifier:' "$file"; then
+              echo "Missing SPDX license identifier: $file"
+              status=1
+            fi
+          done < <(find src third_party tests scripts -type f \( -name '*.cpp' -o -name '*.h' -o -name '*.qml' -o -name '*.sh' \) -print | sort)
+          grep -q 'SPDX-License-Identifier:' install.sh || status=1
+          test "$status" -eq 0
+
           bash ./install.sh --help >/tmp/global-menu-kde-install-help.txt
           grep -Fq -- '--no-deps' /tmp/global-menu-kde-install-help.txt
           grep -Fq -- '--uninstall' /tmp/global-menu-kde-install-help.txt
-          ! grep -Rq 'QT_PLUGIN_PATH.*global-menu-kde.sh\|export QT_PLUGIN_PATH' install.sh scripts README.md
+          ! grep -Rq 'QT_PLUGIN_PATH.*global-menu-kde.sh\|export QT_PLUGIN_PATH' install.sh scripts README.md docs
+
+      - name: QML lint
+        shell: bash
+        run: |
+          set -euo pipefail
+          qmllint_bin=$(command -v qmllint || true)
+          if [[ -z "$qmllint_bin" ]]; then
+            qmllint_bin=$(find /usr/lib/qt6 -type f -name qmllint -perm -u+x -print -quit 2>/dev/null || true)
+          fi
+          test -n "$qmllint_bin"
+          qml_import=$(find /usr/lib/qt6 -maxdepth 2 -type d -name qml -print -quit 2>/dev/null || true)
+          test -n "$qml_import"
+          "$qmllint_bin" -I "$qml_import" src/qml/*.qml
 
       - name: Configure
         run: >-
@@ -53,13 +91,15 @@ jobs:
           -DBUILD_TESTING=ON
 
       - name: Build
-        run: cmake --build build --parallel
+        run: cmake --build build --parallel 2
 
       - name: Test
         run: ctest --test-dir build --output-on-failure
 
-      - name: Stress application-menu lifecycle
-        run: ctest --test-dir build -R appmenumodel_test --repeat until-fail:20 --output-on-failure
+      - name: Stress fallback and application-menu lifecycle
+        run: |
+          ctest --test-dir build -R desktopfallback_test --repeat until-fail:20 --output-on-failure
+          ctest --test-dir build -R appmenumodel_test --repeat until-fail:20 --output-on-failure
 
       - name: Stage install
         run: DESTDIR="$GITHUB_WORKSPACE/stage" cmake --install build
@@ -124,15 +164,24 @@ jobs:
             fi
           '
 
-      - name: End-to-end portable installer and uninstaller smoke
+      - name: End-to-end portable installer, reinstall and uninstaller smoke
+        shell: bash
         run: |
+          set -euo pipefail
+
+          if bash ./install.sh --no-deps >/tmp/root-installer.log 2>&1; then
+            echo 'install.sh unexpectedly accepted root execution'
+            exit 1
+          fi
+          grep -Fq 'regular desktop user' /tmp/root-installer.log
+
           useradd -m installer
           printf 'installer ALL=(ALL) NOPASSWD: ALL\n' >/etc/sudoers.d/global-menu-kde-ci
           chmod 0440 /etc/sudoers.d/global-menu-kde-ci
           chown -R installer:installer "$GITHUB_WORKSPACE"
 
-          echo 'Testing installer from a repository checkout...'
-          su - installer -c "cd '$GITHUB_WORKSPACE' && bash ./install.sh --no-deps"
+          echo 'Testing installer from a repository checkout, including pacman dependency mapping...'
+          su - installer -c "cd '$GITHUB_WORKSPACE' && dbus-run-session -- bash ./install.sh"
 
           test -s /var/lib/global-menu-kde/install_manifest.txt
           test -x /usr/local/bin/global-menu-kde-uninstall
@@ -140,6 +189,15 @@ jobs:
           test -n "$plugin"
           ldd "$plugin" | tee /tmp/installer-ldd.txt
           ! grep -q 'not found' /tmp/installer-ldd.txt
+
+          echo 'Testing reinstall cleanup after a simulated Qt plugin-path migration...'
+          stale=/usr/local/lib/qt6/plugins/plasma/applets/org.chathuranga.globalmenu.so
+          mkdir -p "$(dirname "$stale")"
+          cp "$plugin" "$stale"
+          test -f "$stale"
+          su - installer -c "cd '$GITHUB_WORKSPACE' && dbus-run-session -- bash ./install.sh --no-deps"
+          test ! -e "$stale"
+          test "$(find /usr -type f -name 'org.chathuranga.globalmenu.so' | wc -l)" -eq 1
 
           unset QT_PLUGIN_PATH
           export QT_QPA_PLATFORM=xcb
@@ -164,7 +222,7 @@ jobs:
           test ! -e /usr/local/bin/global-menu-kde-uninstall
 
           echo 'Testing the streamed curl-style installer path...'
-          su - installer -c "GLOBAL_MENU_KDE_REPO='file://$GITHUB_WORKSPACE' GLOBAL_MENU_KDE_REF=HEAD bash -s -- --no-deps < '$GITHUB_WORKSPACE/install.sh'"
+          su - installer -c "GLOBAL_MENU_KDE_REPO='file://$GITHUB_WORKSPACE' GLOBAL_MENU_KDE_REF=HEAD dbus-run-session -- bash -s -- --no-deps < '$GITHUB_WORKSPACE/install.sh'"
 
           test -s /var/lib/global-menu-kde/install_manifest.txt
           test -x /usr/local/bin/global-menu-kde-uninstall
@@ -174,6 +232,137 @@ jobs:
           ! grep -q 'not found' /tmp/streamed-installer-ldd.txt
           ! find /tmp -maxdepth 1 -type d -name 'global-menu-kde.*' -user installer -print -quit | grep -q .
 
+          su - installer -c global-menu-kde-uninstall
+          ! find /usr -type f -name 'org.chathuranga.globalmenu.so' -print -quit | grep -q .
+          test ! -e /var/lib/global-menu-kde/install_manifest.txt
+          test ! -e /usr/local/bin/global-menu-kde-uninstall
+
+  sanitizer:
+    name: ASan + UBSan
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    timeout-minutes: 40
+    steps:
+      - name: Install sanitizer build dependencies
+        run: >-
+          pacman -Syu --noconfirm
+          git base-devel cmake ninja extra-cmake-modules
+          qt6-base qt6-declarative
+          kconfig kcoreaddons ki18n kwindowsystem
+          libplasma plasma-workspace dbus
+
+      - uses: actions/checkout@v4
+
+      - name: Trust checkout directory
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+      - name: Configure sanitizers
+        shell: bash
+        run: |
+          cmake -S . -B build-sanitize -G Ninja \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_INSTALL_PREFIX=/usr \
+            -DBUILD_TESTING=ON \
+            -DCMAKE_CXX_FLAGS='-fsanitize=address,undefined -fno-omit-frame-pointer' \
+            -DCMAKE_EXE_LINKER_FLAGS='-fsanitize=address,undefined' \
+            -DCMAKE_SHARED_LINKER_FLAGS='-fsanitize=address,undefined'
+
+      - name: Build sanitizers
+        run: cmake --build build-sanitize --parallel 2
+
+      - name: Sanitized tests and stress
+        shell: bash
+        env:
+          ASAN_OPTIONS: detect_leaks=0:halt_on_error=1
+          UBSAN_OPTIONS: print_stacktrace=1:halt_on_error=1
+        run: |
+          ctest --test-dir build-sanitize --output-on-failure
+          ctest --test-dir build-sanitize -R desktopfallback_test --repeat until-fail:20 --output-on-failure
+          ctest --test-dir build-sanitize -R appmenumodel_test --repeat until-fail:20 --output-on-failure
+
+  distro-source-installer:
+    name: Source installer / ${{ matrix.name }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Debian stable / apt
+            container: debian:stable-slim
+            family: apt
+          - name: Fedora latest / dnf
+            container: fedora:latest
+            family: dnf
+          - name: openSUSE Tumbleweed / zypper
+            container: opensuse/tumbleweed:latest
+            family: zypper
+    runs-on: ubuntu-latest
+    container: ${{ matrix.container }}
+    timeout-minutes: 55
+    steps:
+      - name: Bootstrap Plasma runtime and checkout tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          case '${{ matrix.family }}' in
+            apt)
+              apt-get update
+              DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+                git sudo ca-certificates plasma-workspace dbus dbus-x11
+              ;;
+            dnf)
+              dnf -y install git sudo ca-certificates plasma-workspace dbus-daemon findutils
+              ;;
+            zypper)
+              zypper --non-interactive refresh
+              zypper --non-interactive install --no-recommends \
+                git sudo ca-certificates plasma6-workspace dbus-1 findutils
+              ;;
+          esac
+          command -v plasmashell
+          command -v dbus-run-session
+
+      - uses: actions/checkout@v4
+
+      - name: Trust checkout and create non-root installer user
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          useradd -m installer
+          mkdir -p /etc/sudoers.d
+          printf 'installer ALL=(ALL) NOPASSWD: ALL\n' >/etc/sudoers.d/global-menu-kde-ci
+          chmod 0440 /etc/sudoers.d/global-menu-kde-ci
+          chown -R installer:installer "$GITHUB_WORKSPACE"
+
+      - name: Run automatic dependency source installer
+        shell: bash
+        run: |
+          set -euo pipefail
+          su - installer -c "cd '$GITHUB_WORKSPACE' && dbus-run-session -- bash ./install.sh"
+          test -s /var/lib/global-menu-kde/install_manifest.txt
+          test -x /usr/local/bin/global-menu-kde-uninstall
+          plugin=$(find /usr -type f -name 'org.chathuranga.globalmenu.so' -print -quit)
+          test -n "$plugin"
+          ldd "$plugin" | tee /tmp/distro-installer-ldd.txt
+          ! grep -q 'not found' /tmp/distro-installer-ldd.txt
+
+      - name: Reinstall and stale-copy cleanup
+        shell: bash
+        run: |
+          set -euo pipefail
+          plugin=$(find /usr -type f -name 'org.chathuranga.globalmenu.so' -print -quit)
+          stale=/usr/local/lib/qt6/plugins/plasma/applets/org.chathuranga.globalmenu.so
+          mkdir -p "$(dirname "$stale")"
+          cp "$plugin" "$stale"
+          test -f "$stale"
+          su - installer -c "cd '$GITHUB_WORKSPACE' && dbus-run-session -- bash ./install.sh --no-deps"
+          test ! -e "$stale"
+          test "$(find /usr -type f -name 'org.chathuranga.globalmenu.so' | wc -l)" -eq 1
+
+      - name: Uninstall leaves no native plugin copy
+        shell: bash
+        run: |
+          set -euo pipefail
           su - installer -c global-menu-kde-uninstall
           ! find /usr -type f -name 'org.chathuranga.globalmenu.so' -print -quit | grep -q .
           test ! -e /var/lib/global-menu-kde/install_manifest.txt
