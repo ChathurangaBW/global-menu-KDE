@@ -12,6 +12,7 @@
 
 class DisplayMenuModel;
 class GlobalMenuModel;
+class GlobalMenuAppletTest;
 class QAction;
 class QMenu;
 class QQuickItem;
@@ -43,6 +44,8 @@ protected:
     bool eventFilter(QObject *watched, QEvent *event) override;
 
 private:
+    friend class GlobalMenuAppletTest;
+
     QAction *sourceActionForIndex(int index) const;
     QMenu *sourceMenuForIndex(int index) const;
     void restoreSourceMenu();
