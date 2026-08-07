@@ -1,0 +1,489 @@
+name: Production Release Gate
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches:
+      - 'release-trigger/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: production-release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  CMAKE_BUILD_PARALLEL_LEVEL: 2
+
+jobs:
+  static-qa:
+    name: Static / metadata / QML QA
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    timeout-minutes: 25
+    steps:
+      - name: Install QA dependencies
+        run: >-
+          pacman -Syu --noconfirm
+          git python shellcheck cmake ninja extra-cmake-modules
+          qt6-base qt6-declarative
+          kconfig kcoreaddons ki18n kwindowsystem
+          libplasma plasma-workspace
+
+      - uses: actions/checkout@v4
+
+      - name: Trust checkout directory
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+      - name: Repository integrity
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          test -s README.md
+          test -s LICENSE
+          python -m json.tool src/metadata.json >/dev/null
+          bash -n scripts/install-system.sh scripts/uninstall-system.sh
+          shellcheck scripts/install-system.sh scripts/uninstall-system.sh
+          ! grep -RIn --exclude-dir=.git --exclude='release.yml' 'QT_PLUGIN_PATH.*global-menu-kde.sh' .
+
+      - name: Version synchronization
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake_version=$(sed -n 's/^project(global-menu-kde VERSION \([^ ]*\).*/\1/p' CMakeLists.txt)
+          metadata_version=$(python -c 'import json; print(json.load(open("src/metadata.json"))["KPlugin"]["Version"])')
+          test -n "$cmake_version"
+          test "$cmake_version" = "$metadata_version"
+          test "$cmake_version" = "1.0.0"
+
+      - name: SPDX audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          status=0
+          while IFS= read -r file; do
+            if ! grep -q 'SPDX-License-Identifier:' "$file"; then
+              echo "Missing SPDX license identifier: $file"
+              status=1
+            fi
+          done < <(find src third_party tests scripts -type f \( -name '*.cpp' -o -name '*.h' -o -name '*.qml' -o -name '*.sh' \) -print | sort)
+          exit "$status"
+
+      - name: QML lint
+        shell: bash
+        run: |
+          set -euo pipefail
+          qmllint -I /usr/lib/qt6/qml src/qml/*.qml
+
+  sanitizer-qa:
+    name: ASan + UBSan + D-Bus stress
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    timeout-minutes: 35
+    steps:
+      - name: Install build dependencies
+        run: >-
+          pacman -Syu --noconfirm
+          git base-devel cmake ninja extra-cmake-modules
+          qt6-base qt6-declarative
+          kconfig kcoreaddons ki18n kwindowsystem
+          libplasma plasma-workspace dbus
+
+      - uses: actions/checkout@v4
+
+      - name: Trust checkout directory
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+      - name: Configure sanitizers
+        shell: bash
+        run: |
+          cmake -S . -B build-sanitize -G Ninja \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_INSTALL_PREFIX=/usr \
+            -DBUILD_TESTING=ON \
+            -DCMAKE_CXX_FLAGS='-fsanitize=address,undefined -fno-omit-frame-pointer' \
+            -DCMAKE_EXE_LINKER_FLAGS='-fsanitize=address,undefined' \
+            -DCMAKE_SHARED_LINKER_FLAGS='-fsanitize=address,undefined'
+
+      - name: Build sanitizers
+        run: cmake --build build-sanitize --parallel 2
+
+      - name: Sanitized test suite
+        shell: bash
+        env:
+          ASAN_OPTIONS: detect_leaks=0:halt_on_error=1
+          UBSAN_OPTIONS: print_stacktrace=1:halt_on_error=1
+        run: ctest --test-dir build-sanitize --output-on-failure
+
+      - name: Stress fallback to application transition
+        shell: bash
+        env:
+          ASAN_OPTIONS: detect_leaks=0:halt_on_error=1
+          UBSAN_OPTIONS: print_stacktrace=1:halt_on_error=1
+        run: ctest --test-dir build-sanitize -R appmenumodel_test --repeat until-fail:20 --output-on-failure
+
+  source-archive:
+    name: Reproducible source archive
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create source archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          version=$(sed -n 's/^project(global-menu-kde VERSION \([^ ]*\).*/\1/p' CMakeLists.txt)
+          mkdir -p dist
+          git archive --format=tar.gz --prefix="global-menu-kde-${version}/" \
+            -o "dist/global-menu-kde-${version}.tar.gz" HEAD
+          sha256sum "dist/global-menu-kde-${version}.tar.gz" > "dist/global-menu-kde-${version}.tar.gz.sha256"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-source
+          path: dist/*
+          if-no-files-found: error
+
+  distro-packages:
+    name: ${{ matrix.name }} package + install smoke
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Debian testing amd64
+            runner: ubuntu-24.04
+            container: debian:testing
+            family: deb
+          - name: Debian testing arm64
+            runner: ubuntu-24.04-arm
+            container: debian:testing
+            family: deb
+          - name: Fedora 44 x86_64
+            runner: ubuntu-24.04
+            container: fedora:44
+            family: rpm
+          - name: Fedora 44 aarch64
+            runner: ubuntu-24.04-arm
+            container: fedora:44
+            family: rpm
+    runs-on: ${{ matrix.runner }}
+    container: ${{ matrix.container }}
+    timeout-minutes: 45
+    steps:
+      - name: Install Debian build/runtime dependencies
+        if: matrix.family == 'deb'
+        shell: bash
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            git build-essential cmake ninja-build extra-cmake-modules \
+            qt6-base-dev qt6-declarative-dev \
+            libkf6config-dev libkf6i18n-dev libkf6windowsystem-dev \
+            libplasma-dev plasma-workspace-dev plasma-workspace \
+            dbus-daemon dbus-x11 xvfb file dpkg-dev fakeroot lintian ca-certificates
+
+      - name: Install Fedora build/runtime dependencies
+        if: matrix.family == 'rpm'
+        shell: bash
+        run: |
+          dnf -y upgrade --refresh
+          dnf -y install \
+            git gcc-c++ cmake ninja-build extra-cmake-modules \
+            qt6-qtbase-devel qt6-qtdeclarative-devel \
+            kf6-kconfig-devel kf6-ki18n-devel kf6-kwindowsystem-devel \
+            libplasma-devel plasma-workspace-devel plasma-workspace \
+            rpm-build rpmlint dbus-daemon xorg-x11-server-Xvfb file findutils which
+
+      - uses: actions/checkout@v4
+
+      - name: Trust checkout directory
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+      - name: Configure Release
+        shell: bash
+        run: |
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX=/usr \
+            -DBUILD_TESTING=ON
+
+      - name: Build
+        run: cmake --build build --parallel 2
+
+      - name: Full tests
+        run: ctest --test-dir build --output-on-failure
+
+      - name: Stress D-Bus transition
+        run: ctest --test-dir build -R appmenumodel_test --repeat until-fail:10 --output-on-failure
+
+      - name: Generate DEB
+        if: matrix.family == 'deb'
+        shell: bash
+        run: |
+          mkdir -p dist
+          cpack --config build/CPackConfig.cmake -G DEB -B dist
+          package=$(find dist -maxdepth 1 -type f -name '*.deb' -print -quit)
+          test -n "$package"
+          dpkg-deb --info "$package"
+          dpkg-deb --contents "$package"
+          lintian --fail-on error "$package"
+          test "$(dpkg-deb -f "$package" Architecture)" = "$(dpkg --print-architecture)"
+
+      - name: Generate RPM
+        if: matrix.family == 'rpm'
+        shell: bash
+        run: |
+          mkdir -p dist
+          cpack --config build/CPackConfig.cmake -G RPM -B dist
+          package=$(find dist -maxdepth 1 -type f -name '*.rpm' -print -quit)
+          test -n "$package"
+          rpm -qpi "$package"
+          rpm -qpl "$package"
+          rpmlint "$package"
+          expected=$(uname -m)
+          actual=$(rpm -qp --qf '%{ARCH}' "$package")
+          test "$actual" = "$expected"
+
+      - name: Install generated package
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ '${{ matrix.family }}' == 'deb' ]]; then
+            apt-get install -y ./dist/*.deb
+            dpkg-query -W global-menu-kde
+          else
+            dnf -y install ./dist/*.rpm
+            rpm -q global-menu-kde
+          fi
+          plugin=$(find /usr -type f -name 'org.chathuranga.globalmenu.so' -print -quit)
+          test -n "$plugin"
+          file "$plugin"
+          ldd "$plugin" | tee /tmp/package-ldd.txt
+          ! grep -q 'not found' /tmp/package-ldd.txt
+          if command -v kbuildsycoca6 >/dev/null 2>&1; then
+            kbuildsycoca6 --noincremental || true
+          fi
+
+      - name: Native package discovery smoke with no QT_PLUGIN_PATH
+        shell: bash
+        run: |
+          unset QT_PLUGIN_PATH
+          export QT_QPA_PLATFORM=xcb
+          dbus-run-session -- xvfb-run -a bash -euo pipefail -c '
+            test -z "${QT_PLUGIN_PATH:-}"
+            if plasmawindowed --help 2>&1 | grep -q -- "--smoke-test"; then
+              plasmawindowed --smoke-test org.chathuranga.globalmenu
+            else
+              timeout 10s plasmawindowed org.chathuranga.globalmenu >/tmp/plasmawindowed-package.log 2>&1 || code=$?
+              code=${code:-0}
+              if [[ $code -ne 0 && $code -ne 124 ]]; then
+                cat /tmp/plasmawindowed-package.log
+                exit "$code"
+              fi
+              cat /tmp/plasmawindowed-package.log
+              ! grep -Eiq "failed to load|plugin.*not found|module .* is not installed|QQmlApplicationEngine failed" /tmp/plasmawindowed-package.log
+            fi
+          '
+
+      - name: Package uninstall smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ '${{ matrix.family }}' == 'deb' ]]; then
+            dpkg -r global-menu-kde
+            ! dpkg-query -W -f='${Status}' global-menu-kde 2>/dev/null | grep -q 'install ok installed'
+          else
+            dnf -y remove global-menu-kde
+            ! rpm -q global-menu-kde
+          fi
+          ! find /usr -type f -name 'org.chathuranga.globalmenu.so' -print -quit | grep -q .
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.family }}-${{ runner.arch }}
+          path: dist/*
+          if-no-files-found: error
+
+  arch-package:
+    name: Arch Linux x86_64 package + install smoke
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    timeout-minutes: 45
+    steps:
+      - name: Install build/runtime dependencies
+        run: >-
+          pacman -Syu --noconfirm
+          git base-devel cmake ninja extra-cmake-modules
+          qt6-base qt6-declarative
+          kconfig kcoreaddons ki18n kwindowsystem
+          libplasma plasma-workspace
+          xorg-server-xvfb dbus file namcap
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Trust checkout directory
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+      - name: Create native Arch package with makepkg
+        shell: bash
+        run: |
+          set -euo pipefail
+          version=$(sed -n 's/^project(global-menu-kde VERSION \([^ ]*\).*/\1/p' CMakeLists.txt)
+          work=/tmp/global-menu-kde-pkg
+          rm -rf "$work"
+          mkdir -p "$work"
+          git archive --format=tar.gz --prefix="global-menu-kde-${version}/" \
+            -o "$work/global-menu-kde-${version}.tar.gz" HEAD
+          source_sha=$(sha256sum "$work/global-menu-kde-${version}.tar.gz" | awk '{print $1}')
+          cat > "$work/PKGBUILD" <<EOF
+          pkgname=global-menu-kde
+          pkgver=${version}
+          pkgrel=1
+          pkgdesc='Native KDE Plasma 6 Global Menu applet with desktop fallback'
+          arch=('x86_64')
+          url='https://github.com/ChathurangaBW/global-menu-KDE'
+          license=('GPL-2.0-or-later')
+          depends=('libplasma' 'plasma-workspace')
+          makedepends=('cmake' 'ninja' 'extra-cmake-modules' 'qt6-base' 'qt6-declarative' 'kconfig' 'ki18n' 'kwindowsystem')
+          source=("global-menu-kde-${version}.tar.gz")
+          sha256sums=('${source_sha}')
+
+          build() {
+              cmake -S "\$srcdir/global-menu-kde-${version}" -B build -G Ninja \\
+                  -DCMAKE_BUILD_TYPE=Release \\
+                  -DCMAKE_INSTALL_PREFIX=/usr \\
+                  -DBUILD_TESTING=ON
+              cmake --build build --parallel 2
+          }
+
+          check() {
+              ctest --test-dir build --output-on-failure
+              ctest --test-dir build -R appmenumodel_test --repeat until-fail:10 --output-on-failure
+          }
+
+          package() {
+              DESTDIR="\$pkgdir" cmake --install build
+          }
+          EOF
+          useradd -m builder
+          chown -R builder:builder "$work"
+          su builder -c "cd '$work' && makepkg --cleanbuild --noconfirm"
+          mkdir -p dist
+          cp "$work"/*.pkg.tar.zst dist/
+          cp "$work/PKGBUILD" dist/PKGBUILD
+          namcap dist/*.pkg.tar.zst
+
+      - name: Install Arch package
+        shell: bash
+        run: |
+          pacman -U --noconfirm dist/*.pkg.tar.zst
+          pacman -Q global-menu-kde
+          plugin=$(find /usr -type f -name 'org.chathuranga.globalmenu.so' -print -quit)
+          test -n "$plugin"
+          ldd "$plugin" | tee /tmp/arch-ldd.txt
+          ! grep -q 'not found' /tmp/arch-ldd.txt
+
+      - name: Native Arch discovery smoke with no QT_PLUGIN_PATH
+        shell: bash
+        run: |
+          unset QT_PLUGIN_PATH
+          export QT_QPA_PLATFORM=xcb
+          dbus-run-session -- xvfb-run -a bash -euo pipefail -c '
+            test -z "${QT_PLUGIN_PATH:-}"
+            if plasmawindowed --help 2>&1 | grep -q -- "--smoke-test"; then
+              plasmawindowed --smoke-test org.chathuranga.globalmenu
+            else
+              timeout 10s plasmawindowed org.chathuranga.globalmenu >/tmp/plasmawindowed-arch.log 2>&1 || code=$?
+              code=${code:-0}
+              if [[ $code -ne 0 && $code -ne 124 ]]; then
+                cat /tmp/plasmawindowed-arch.log
+                exit "$code"
+              fi
+              ! grep -Eiq "failed to load|plugin.*not found|module .* is not installed|QQmlApplicationEngine failed" /tmp/plasmawindowed-arch.log
+            fi
+          '
+
+      - name: Arch uninstall smoke
+        shell: bash
+        run: |
+          pacman -R --noconfirm global-menu-kde
+          ! pacman -Q global-menu-kde
+          ! find /usr -type f -name 'org.chathuranga.globalmenu.so' -print -quit | grep -q .
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-arch-x64
+          path: dist/*
+          if-no-files-found: error
+
+  publish:
+    name: Publish production release
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/release-trigger/')
+    needs:
+      - static-qa
+      - sanitizer-qa
+      - source-archive
+      - distro-packages
+      - arch-package
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: release-*
+          path: release-assets
+          merge-multiple: true
+
+      - name: Validate release asset set
+        shell: bash
+        run: |
+          set -euo pipefail
+          version=$(sed -n 's/^project(global-menu-kde VERSION \([^ ]*\).*/\1/p' CMakeLists.txt)
+          test -f "release-assets/global-menu-kde-${version}.tar.gz"
+          test "$(find release-assets -maxdepth 1 -name '*.deb' | wc -l)" -ge 2
+          test "$(find release-assets -maxdepth 1 -name '*.rpm' | wc -l)" -ge 2
+          test "$(find release-assets -maxdepth 1 -name '*.pkg.tar.zst' | wc -l)" -ge 1
+          (cd release-assets && sha256sum *.deb *.rpm *.pkg.tar.zst *.tar.gz PKGBUILD | sort -k2 > SHA256SUMS)
+          cat release-assets/SHA256SUMS
+
+      - name: Create GitHub production release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          version=$(sed -n 's/^project(global-menu-kde VERSION \([^ ]*\).*/\1/p' CMakeLists.txt)
+          tag="v${version}"
+          cat > /tmp/release-notes.md <<EOF
+          # Global Menu KDE ${version}
+
+          Production release of the native KDE Plasma 6 Global Menu applet with desktop fallback.
+
+          Final release gate passed before publication:
+          - static repository, metadata, SPDX and QML validation;
+          - ASan + UBSan test suite;
+          - repeated D-Bus fallback → application menu → fallback stress tests;
+          - Debian testing packages on amd64 and arm64, installed/smoke-tested/uninstalled;
+          - Fedora 44 RPM packages on x86_64 and aarch64, installed/smoke-tested/uninstalled;
+          - Arch Linux x86_64 package built with makepkg, installed/smoke-tested/uninstalled;
+          - native Plasma plugin discovery with QT_PLUGIN_PATH unset;
+          - package dependency audits and checksums.
+
+          Use the package matching your distribution and CPU architecture. Official Arch Linux is x86_64; Debian/Fedora assets are provided for both x86_64/amd64 and ARM64/aarch64.
+          EOF
+          gh release create "$tag" \
+            --target "$GITHUB_SHA" \
+            --title "Global Menu KDE ${version}" \
+            --notes-file /tmp/release-notes.md \
+            release-assets/*
