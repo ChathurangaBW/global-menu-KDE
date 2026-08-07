@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="420" viewBox="0 0 1280 420" role="img" aria-labelledby="title desc">
+  <title id="title">Global Menu KDE application-menu-only preview</title>
+  <desc id="desc">A KDE Plasma panel showing only the active application's File, Edit, View, Go, Tools, Settings, and Help menu headings, with the File menu open.</desc>
+  <defs>
+    <linearGradient id="wallpaper" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#274c77"/>
+      <stop offset="0.48" stop-color="#168aad"/>
+      <stop offset="0.49" stop-color="#f07167"/>
+      <stop offset="1" stop-color="#ef476f"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#22252a" stop-opacity="0.96"/>
+      <stop offset="1" stop-color="#111318" stop-opacity="0.96"/>
+    </linearGradient>
+    <linearGradient id="menu" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2a2d33" stop-opacity="0.98"/>
+      <stop offset="1" stop-color="#181a1f" stop-opacity="0.98"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="180%">
+      <feDropShadow dx="0" dy="9" stdDeviation="11" flood-color="#000" flood-opacity="0.38"/>
+    </filter>
+  </defs>
+
+  <rect width="1280" height="420" fill="url(#wallpaper)"/>
+  <path d="M0 420 L330 0 L660 0 L390 420 Z" fill="#d8e1f0" opacity="0.42"/>
+  <path d="M770 0 L1280 0 L1280 420 L1040 420 Z" fill="#055a8c" opacity="0.44"/>
+
+  <rect x="0" y="0" width="1280" height="46" fill="url(#panel)"/>
+  <line x1="0" y1="45.5" x2="1280" y2="45.5" stroke="#ffffff" stroke-opacity="0.12"/>
+
+  <g font-family="Inter, Noto Sans, Segoe UI, sans-serif" font-size="16" fill="#f5f7fa">
+    <rect x="14" y="7" width="52" height="32" rx="7" fill="#ffffff" fill-opacity="0.10"/>
+    <text x="40" y="29" text-anchor="middle" font-weight="600">File</text>
+    <text x="83" y="29">Edit</text>
+    <text x="128" y="29">View</text>
+    <text x="180" y="29">Go</text>
+    <text x="215" y="29">Tools</text>
+    <text x="271" y="29">Settings</text>
+    <text x="347" y="29">Help</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="14" y="48" width="292" height="326" rx="12" fill="url(#menu)" stroke="#ffffff" stroke-opacity="0.13"/>
+  </g>
+
+  <g font-family="Inter, Noto Sans, Segoe UI, sans-serif" font-size="15" fill="#f2f4f7">
+    <text x="36" y="79">New Window</text><text x="279" y="79" text-anchor="end" fill="#c6cbd3">Ctrl+N</text>
+    <text x="36" y="108">New Tab</text><text x="279" y="108" text-anchor="end" fill="#c6cbd3">Ctrl+T</text>
+    <text x="36" y="137">Create New…</text>
+    <line x1="27" y1="154" x2="293" y2="154" stroke="#ffffff" stroke-opacity="0.13"/>
+    <text x="36" y="181">Open…</text><text x="279" y="181" text-anchor="end" fill="#c6cbd3">Ctrl+O</text>
+    <text x="36" y="210">Open With</text><text x="280" y="210" text-anchor="end" fill="#c6cbd3">›</text>
+    <text x="36" y="239">Recent Files</text><text x="280" y="239" text-anchor="end" fill="#c6cbd3">›</text>
+    <line x1="27" y1="256" x2="293" y2="256" stroke="#ffffff" stroke-opacity="0.13"/>
+    <text x="36" y="283">Close</text><text x="279" y="283" text-anchor="end" fill="#c6cbd3">Ctrl+W</text>
+    <text x="36" y="312">Close All</text>
+    <line x1="27" y1="329" x2="293" y2="329" stroke="#ffffff" stroke-opacity="0.13"/>
+    <text x="36" y="356">Quit</text><text x="279" y="356" text-anchor="end" fill="#c6cbd3">Ctrl+Q</text>
+  </g>
+
+  <g font-family="Inter, Noto Sans, Segoe UI, sans-serif">
+    <rect x="756" y="305" width="492" height="78" rx="14" fill="#111318" fill-opacity="0.84" stroke="#ffffff" stroke-opacity="0.12"/>
+    <text x="780" y="334" font-size="16" font-weight="600" fill="#ffffff">Application menu only</text>
+    <text x="780" y="359" font-size="14" fill="#d5dae2">Appears for menu-exporting apps such as Dolphin or Kate.</text>
+    <text x="780" y="379" font-size="14" fill="#d5dae2">Collapses to zero panel width when no menu is exported.</text>
+  </g>
+</svg>
