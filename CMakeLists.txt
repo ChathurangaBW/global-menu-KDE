@@ -38,7 +38,7 @@ feature_summary(WHAT ALL FATAL_ON_MISSING_REQUIRED_PACKAGES)
 # Distribution packages are generated from the exact tested build tree.
 set(CPACK_PACKAGE_NAME "global-menu-kde")
 set(CPACK_PACKAGE_VENDOR "ChathurangaBW")
-set(CPACK_PACKAGE_CONTACT "ChathurangaBW <https://github.com/ChathurangaBW/global-menu-KDE>")
+set(CPACK_PACKAGE_CONTACT "ChathurangaBW <ChathurangaBW@users.noreply.github.com>")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Native KDE Plasma 6 Global Menu applet with desktop fallback")
 set(CPACK_PACKAGE_HOMEPAGE_URL "https://github.com/ChathurangaBW/global-menu-KDE")
 set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
