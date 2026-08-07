@@ -48,7 +48,7 @@ jobs:
           python -m json.tool src/metadata.json >/dev/null
           bash -n scripts/install-system.sh scripts/uninstall-system.sh
           shellcheck scripts/install-system.sh scripts/uninstall-system.sh
-          ! grep -RIn --exclude-dir=.git --exclude='release.yml' 'QT_PLUGIN_PATH.*global-menu-kde.sh' .
+          ! grep -RIn --exclude-dir=.git --exclude='release.yml' --exclude='ci.yml' 'QT_PLUGIN_PATH.*global-menu-kde.sh\|export QT_PLUGIN_PATH' .
 
       - name: Version synchronization
         shell: bash
