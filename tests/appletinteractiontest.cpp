@@ -65,7 +65,10 @@ void GlobalMenuAppletTest::fallbackSubmenuActionsReallyExecute()
             QFileDevice::ReadOther | QFileDevice::ExeOther));
 
     const QByteArray oldPath = qgetenv("PATH");
-    qputenv("PATH", temporaryDirectory.path().toUtf8() + ':' + oldPath);
+    QByteArray testPath = temporaryDirectory.path().toUtf8();
+    testPath.append(':');
+    testPath.append(oldPath);
+    qputenv("PATH", testPath);
     QCOMPARE(QStandardPaths::findExecutable(QStringLiteral("konsole")), fakeKonsolePath);
 
     UrlCapture urlCapture;
