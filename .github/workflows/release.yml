@@ -165,13 +165,13 @@ jobs:
             runner: ubuntu-24.04-arm
             container: debian:testing
             family: deb
-          - name: Fedora 44 x86_64
+          - name: Fedora 43 x86_64
             runner: ubuntu-24.04
-            container: fedora:44
+            container: fedora:43
             family: rpm
-          - name: Fedora 44 aarch64
+          - name: Fedora 43 aarch64
             runner: ubuntu-24.04-arm
-            container: fedora:44
+            container: fedora:43
             family: rpm
     runs-on: ${{ matrix.runner }}
     container: ${{ matrix.container }}
@@ -212,8 +212,7 @@ jobs:
           cmake -S . -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_INSTALL_PREFIX=/usr \
-            -DBUILD_TESTING=ON \
-            -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+            -DBUILD_TESTING=ON
 
       - name: Build
         run: cmake --build build --parallel 2

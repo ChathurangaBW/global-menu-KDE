@@ -50,6 +50,9 @@ set(CPACK_STRIP_FILES TRUE)
 
 set(CPACK_DEBIAN_PACKAGE_SECTION "kde")
 set(CPACK_DEBIAN_PACKAGE_PRIORITY "optional")
+set(CPACK_DEBIAN_PACKAGE_DESCRIPTION [=[Native KDE Plasma 6 Global Menu applet with desktop fallback.
+ This package provides a native Plasma applet that exports application menus
+ to a configurable global menu and supplies a desktop fallback when needed.]=])
 set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
 set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
 
@@ -57,5 +60,10 @@ set(CPACK_RPM_PACKAGE_LICENSE "GPL-2.0-or-later")
 set(CPACK_RPM_PACKAGE_GROUP "User Interface/Desktops")
 set(CPACK_RPM_PACKAGE_AUTOREQPROV ON)
 set(CPACK_RPM_FILE_NAME RPM-DEFAULT)
+
+install(
+    FILES packaging/debian/copyright
+    DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/doc/${CPACK_PACKAGE_NAME}"
+)
 
 include(CPack)
