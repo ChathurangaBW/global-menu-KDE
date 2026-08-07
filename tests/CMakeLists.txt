@@ -16,9 +16,12 @@ target_link_libraries(desktopfallback_test PRIVATE
     KF6::I18n
 )
 
-add_test(NAME desktopfallback_test COMMAND desktopfallback_test)
+add_test(NAME desktopfallback_test
+    COMMAND dbus-run-session -- $<TARGET_FILE:desktopfallback_test>
+)
 set_tests_properties(desktopfallback_test PROPERTIES
     ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
+    TIMEOUT 30
 )
 
 add_executable(appmenumodel_test
