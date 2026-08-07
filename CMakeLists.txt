@@ -13,6 +13,7 @@ set(CMAKE_MODULE_PATH ${ECM_MODULE_PATH})
 include(KDEInstallDirs6)
 include(KDECMakeSettings)
 include(KDECompilerSettings)
+include(ECMQtDeclareLoggingCategory)
 include(FeatureSummary)
 include(CTest)
 
