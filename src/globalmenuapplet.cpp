@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "globalmenuapplet.h"
 
+#include "displaymenumodel.h"
 #include "globalmenumodel.h"
 
 #include <KPluginFactory>
@@ -60,7 +61,8 @@ Qt::Edges edgeForLocation(Plasma::Types::Location location)
 
 GlobalMenuApplet::GlobalMenuApplet(QObject *parent, const KPluginMetaData &data, const QVariantList &args)
     : Plasma::Applet(parent, data, args)
-    , m_model(new GlobalMenuModel(this))
+    , m_applicationModel(new GlobalMenuModel(this))
+    , m_model(new DisplayMenuModel(m_applicationModel, this))
 {
     registerViewService();
 
@@ -122,11 +124,7 @@ void GlobalMenuApplet::setButtonGrid(QQuickItem *buttonGrid)
 
 QAction *GlobalMenuApplet::sourceActionForIndex(int index) const
 {
-    if (!m_model || index < 0 || index >= m_model->rowCount()) {
-        return nullptr;
-    }
-
-    return m_model->data(m_model->index(index, 0), GlobalMenuModel::ActionRole).value<QAction *>();
+    return m_model ? m_model->actionForIndex(index) : nullptr;
 }
 
 QMenu *GlobalMenuApplet::sourceMenuForIndex(int index) const
