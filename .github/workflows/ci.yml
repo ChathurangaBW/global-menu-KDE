@@ -1,8 +1,9 @@
-name: Native Global Menu Rewrite CI
+name: Native Global Menu CI
 
 on:
   push:
     branches:
+      - main
       - rewrite/native-global-menu-fallback
   pull_request:
     branches: [main]
@@ -12,7 +13,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: native-rewrite-${{ github.ref }}
+  group: native-global-menu-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -24,7 +25,7 @@ jobs:
       - name: Install Plasma 6 build/runtime dependencies
         run: >-
           pacman -Syu --noconfirm
-          git base-devel cmake ninja extra-cmake-modules
+          git base-devel shellcheck cmake ninja extra-cmake-modules
           qt6-base qt6-declarative
           kconfig kcoreaddons ki18n kwindowsystem
           libplasma plasma-workspace xorg-server-xvfb dbus file
@@ -33,6 +34,14 @@ jobs:
 
       - name: Trust checkout directory
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+      - name: Validate repository and installer scripts
+        run: |
+          git diff --check
+          bash -n scripts/install-system.sh scripts/uninstall-system.sh
+          shellcheck scripts/install-system.sh scripts/uninstall-system.sh
+          grep -Fq 'File   Edit   View   Go   Tools   Settings   Help' README.md
+          ! grep -Rq 'QT_PLUGIN_PATH.*global-menu-kde.sh' scripts README.md
 
       - name: Configure
         run: >-
