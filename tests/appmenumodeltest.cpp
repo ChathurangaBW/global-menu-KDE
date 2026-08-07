@@ -89,13 +89,13 @@ public:
             const int parentId = message.arguments().at(0).toInt();
             DBusMenuLayoutItem root;
             root.id = parentId;
-            if (parentId == 0) {
+            if (parentId == 0 && !emptyRoot) {
                 root.children.append(item(1, QStringLiteral("_File"), true));
                 root.children.append(item(2, QStringLiteral("_About")));
-            } else if (parentId == 1) {
+            } else if (parentId == 1 && !emptyRoot) {
                 root.children.append(item(10, QStringLiteral("_Open")));
             }
-            connection.send(message.createReply({QVariant::fromValue(1u), QVariant::fromValue(root)}));
+            connection.send(message.createReply({QVariant::fromValue(revision), QVariant::fromValue(root)}));
             return true;
         }
 
@@ -124,42 +124,33 @@ public:
         return false;
     }
 
+    bool sendLayoutUpdated(const QDBusConnection &connection)
+    {
+        ++revision;
+        QDBusMessage signal = QDBusMessage::createSignal(QString::fromLatin1(menuPath),
+                                                         QString::fromLatin1(menuInterface),
+                                                         QStringLiteral("LayoutUpdated"));
+        signal << revision << 0;
+        return connection.send(signal);
+    }
+
+    bool emptyRoot = false;
+    uint revision = 1;
     int getLayoutCalls = 0;
     QList<int> aboutToShowIds;
     QList<Event> events;
 };
-}
 
-class AppMenuModelTest final : public QObject
+void isolateTaskSignals(AppMenuModel &model)
 {
-    Q_OBJECT
-
-private Q_SLOTS:
-    void fallbackApplicationFallback();
-};
-
-void AppMenuModelTest::fallbackApplicationFallback()
-{
-    QDBusConnection connection = QDBusConnection::sessionBus();
-    QVERIFY(connection.isConnected());
-
-    FakeMenuObject fakeMenu;
-    QVERIFY(connection.registerVirtualObject(QString::fromLatin1(menuPath), &fakeMenu, QDBusConnection::SingleNode));
-
-    AppMenuModel model;
-    QVERIFY(model.menuAvailable());
-    QVERIFY(model.usingDesktopFallback());
-    QCOMPARE(model.rowCount(), 7);
-
-    // This is a model/importer integration test, not an active-window test.
-    // In a headless session LibTaskManager has no real active task and may emit
-    // changes that correctly select the desktop fallback. Isolate those live
-    // signals before manually injecting the fake application's menu source.
     auto *tasksModel = model.findChild<TaskManager::TasksModel *>();
-    QVERIFY(tasksModel);
+    Q_ASSERT(tasksModel);
     QObject::disconnect(tasksModel, nullptr, &model, nullptr);
     tasksModel->blockSignals(true);
+}
 
+void verifyDesktopHeadings(AppMenuModel &model)
+{
     const QStringList desktopHeadings = {
         QStringLiteral("File"),
         QStringLiteral("Edit"),
@@ -169,12 +160,44 @@ void AppMenuModelTest::fallbackApplicationFallback()
         QStringLiteral("Settings"),
         QStringLiteral("Help"),
     };
+    QCOMPARE(model.rowCount(), desktopHeadings.size());
     for (int row = 0; row < desktopHeadings.size(); ++row) {
         QCOMPARE(plainLabel(model.data(model.index(row, 0), AppMenuModel::MenuRole).toString()), desktopHeadings.at(row));
     }
+}
+}
 
-    // Use the connection's unique service name for a same-process fixture.
-    model.updateApplicationMenu(connection.baseService(), QString::fromLatin1(menuPath));
+class AppMenuModelTest final : public QObject
+{
+    Q_OBJECT
+
+private Q_SLOTS:
+    void fallbackApplicationExporterLossFallback();
+    void emptyApplicationMenuKeepsFallbackUntilUsable();
+};
+
+void AppMenuModelTest::fallbackApplicationExporterLossFallback()
+{
+    const QString connectionName = QStringLiteral("global-menu-kde-exporter-primary");
+    const QString serviceName = QStringLiteral("org.example.GlobalMenuKde.Primary");
+    QDBusConnection exporter = QDBusConnection::connectToBus(QDBusConnection::SessionBus, connectionName);
+    QVERIFY(exporter.isConnected());
+    QVERIFY(exporter.registerService(serviceName));
+
+    FakeMenuObject fakeMenu;
+    QVERIFY(exporter.registerVirtualObject(QString::fromLatin1(menuPath), &fakeMenu, QDBusConnection::SingleNode));
+
+    AppMenuModel model;
+    QVERIFY(model.menuAvailable());
+    QVERIFY(model.usingDesktopFallback());
+    verifyDesktopHeadings(model);
+
+    // This is a model/importer integration test, not an active-window test.
+    // Isolate LibTaskManager so the injected exporter is not replaced by the
+    // deliberately empty active-window state in this headless fixture.
+    isolateTaskSignals(model);
+
+    model.updateApplicationMenu(serviceName, QString::fromLatin1(menuPath));
 
     QTRY_VERIFY_WITH_TIMEOUT(fakeMenu.getLayoutCalls > 0, 5000);
     QTRY_VERIFY_WITH_TIMEOUT(!model.usingDesktopFallback(), 5000);
@@ -198,11 +221,47 @@ void AppMenuModelTest::fallbackApplicationFallback()
     aboutAction->trigger();
     QTRY_VERIFY_WITH_TIMEOUT(fakeMenu.hasEvent(2, QStringLiteral("clicked")), 5000);
 
-    model.updateApplicationMenu(QString(), QString());
+    // Exercise the real service watcher path: losing the exporting D-Bus
+    // connection must return the applet to the desktop fallback without an
+    // explicit model clear from the test.
+    QDBusConnection::disconnectFromBus(connectionName);
     QTRY_VERIFY_WITH_TIMEOUT(model.usingDesktopFallback(), 5000);
     QTRY_COMPARE_WITH_TIMEOUT(model.rowCount(), 7, 5000);
+    verifyDesktopHeadings(model);
+}
 
-    connection.unregisterObject(QString::fromLatin1(menuPath), QDBusConnection::UnregisterNode);
+void AppMenuModelTest::emptyApplicationMenuKeepsFallbackUntilUsable()
+{
+    const QString connectionName = QStringLiteral("global-menu-kde-exporter-empty");
+    const QString serviceName = QStringLiteral("org.example.GlobalMenuKde.Empty");
+    QDBusConnection exporter = QDBusConnection::connectToBus(QDBusConnection::SessionBus, connectionName);
+    QVERIFY(exporter.isConnected());
+    QVERIFY(exporter.registerService(serviceName));
+
+    FakeMenuObject fakeMenu;
+    fakeMenu.emptyRoot = true;
+    QVERIFY(exporter.registerVirtualObject(QString::fromLatin1(menuPath), &fakeMenu, QDBusConnection::SingleNode));
+
+    AppMenuModel model;
+    isolateTaskSignals(model);
+    QVERIFY(model.usingDesktopFallback());
+
+    model.updateApplicationMenu(serviceName, QString::fromLatin1(menuPath));
+    QTRY_VERIFY_WITH_TIMEOUT(fakeMenu.getLayoutCalls > 0, 5000);
+    QVERIFY(model.usingDesktopFallback());
+    verifyDesktopHeadings(model);
+
+    // An exporter can initially publish an empty layout and populate it later.
+    // The fallback remains visible until a usable application menu arrives.
+    fakeMenu.emptyRoot = false;
+    QVERIFY(fakeMenu.sendLayoutUpdated(exporter));
+    QTRY_VERIFY_WITH_TIMEOUT(!model.usingDesktopFallback(), 5000);
+    QTRY_VERIFY_WITH_TIMEOUT(model.rowCount() >= 2, 5000);
+    QCOMPARE(plainLabel(model.data(model.index(0, 0), AppMenuModel::MenuRole).toString()), QStringLiteral("File"));
+
+    QDBusConnection::disconnectFromBus(connectionName);
+    QTRY_VERIFY_WITH_TIMEOUT(model.usingDesktopFallback(), 5000);
+    verifyDesktopHeadings(model);
 }
 
 QTEST_MAIN(AppMenuModelTest)
