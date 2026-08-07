@@ -7,9 +7,11 @@
 #include "dbusmenutypes.h"
 
 #include <QAbstractListModel>
+#include <QHash>
 #include <QPointer>
 #include <QString>
 #include <QTimer>
+#include <QVariantMap>
 
 class QAction;
 class QDBusInterface;
@@ -64,6 +66,8 @@ private:
     void clearActions();
     void rebuildActions(const DBusMenuLayoutItem &root);
     QAction *buildAction(const DBusMenuLayoutItem &item, QObject *owner);
+    void applyActionProperties(int id, QAction *action);
+    void updateMenuAvailability();
     void sendEvent(int id, const QString &eventName);
     void sendClicked(int id);
     void sendAboutToShow(int id);
@@ -79,6 +83,8 @@ private:
     QList<QAction *> m_topLevelActions;
     QList<int> m_topLevelIds;
     QList<QMenu *> m_ownedMenus;
+    QHash<int, QAction *> m_actionsById;
+    QHash<int, QVariantMap> m_itemProperties;
 
     QTimer m_refreshTimer;
     quint64 m_sourceGeneration = 0;
