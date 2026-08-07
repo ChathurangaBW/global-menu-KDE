@@ -131,6 +131,7 @@ jobs:
           chmod 0440 /etc/sudoers.d/global-menu-kde-ci
           chown -R installer:installer "$GITHUB_WORKSPACE"
 
+          echo 'Testing installer from a repository checkout...'
           su - installer -c "cd '$GITHUB_WORKSPACE' && bash ./install.sh --no-deps"
 
           test -s /var/lib/global-menu-kde/install_manifest.txt
@@ -156,6 +157,22 @@ jobs:
               ! grep -Eiq "failed to load|plugin.*not found|module .* is not installed|QQmlApplicationEngine failed" /tmp/plasmawindowed-installer.log
             fi
           '
+
+          su - installer -c global-menu-kde-uninstall
+          ! find /usr -type f -name 'org.chathuranga.globalmenu.so' -print -quit | grep -q .
+          test ! -e /var/lib/global-menu-kde/install_manifest.txt
+          test ! -e /usr/local/bin/global-menu-kde-uninstall
+
+          echo 'Testing the streamed curl-style installer path...'
+          su - installer -c "GLOBAL_MENU_KDE_REPO='file://$GITHUB_WORKSPACE' GLOBAL_MENU_KDE_REF=HEAD bash -s -- --no-deps < '$GITHUB_WORKSPACE/install.sh'"
+
+          test -s /var/lib/global-menu-kde/install_manifest.txt
+          test -x /usr/local/bin/global-menu-kde-uninstall
+          plugin=$(find /usr -type f -name 'org.chathuranga.globalmenu.so' -print -quit)
+          test -n "$plugin"
+          ldd "$plugin" | tee /tmp/streamed-installer-ldd.txt
+          ! grep -q 'not found' /tmp/streamed-installer-ldd.txt
+          ! find /tmp -maxdepth 1 -type d -name 'global-menu-kde.*' -user installer -print -quit | grep -q .
 
           su - installer -c global-menu-kde-uninstall
           ! find /usr -type f -name 'org.chathuranga.globalmenu.so' -print -quit | grep -q .
