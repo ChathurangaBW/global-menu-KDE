@@ -1,8 +1,10 @@
-// SPDX-FileCopyrightText: 2013 Heena Mahour <heena393@gmail.com>
-// SPDX-FileCopyrightText: 2013 Sebastian Kügler <sebas@kde.org>
-// SPDX-FileCopyrightText: 2016 Kai Uwe Broulik <kde@privat.broulik.de>
-// SPDX-FileCopyrightText: 2026 ChathurangaBW
-// SPDX-License-Identifier: GPL-2.0-or-later
+/*
+    SPDX-FileCopyrightText: 2013 Heena Mahour <heena393@gmail.com>
+    SPDX-FileCopyrightText: 2013 Sebastian Kügler <sebas@kde.org>
+    SPDX-FileCopyrightText: 2016 Kai Uwe Broulik <kde@privat.broulik.de>
+
+    SPDX-License-Identifier: GPL-2.0-or-later
+*/
 pragma ComponentBehavior: Bound
 
 import QtQuick
@@ -12,49 +14,60 @@ import QtQml
 import org.kde.plasma.plasmoid
 import org.kde.plasma.core as PlasmaCore
 import org.kde.plasma.private.keyboardindicator as KeyboardIndicator
+import org.kde.plasma.components as PlasmaComponents3
 import org.kde.kirigami as Kirigami
+import plasma.applet.org.chathuranga.globalmenu
 
 PlasmoidItem {
     id: root
 
     readonly property bool vertical: Plasmoid.formFactor === PlasmaCore.Types.Vertical
+    readonly property bool view: Plasmoid.configuration.compactView
 
-    preferredRepresentation: fullRepresentation
-    Plasmoid.status: PlasmaCore.Types.ActiveStatus
+    onViewChanged: {
+        Plasmoid.view = view;
+    }
 
-    // This is a menu applet for an existing Plasma panel, not a second panel
-    // or standalone framed widget. The containment supplies the panel surface.
-    Plasmoid.backgroundHints: PlasmaCore.Types.NoBackground
+    // Intentionally identical to KDE's native Global Menu presentation.
+    Plasmoid.constraintHints: Plasmoid.CanFillArea
+    preferredRepresentation: Plasmoid.configuration.compactView ? compactRepresentation : fullRepresentation
 
-    implicitWidth: buttonGrid.implicitWidth
-    implicitHeight: buttonGrid.implicitHeight
-    Layout.minimumWidth: implicitWidth
-    Layout.preferredWidth: implicitWidth
-    Layout.maximumWidth: implicitWidth
-    Layout.minimumHeight: implicitHeight
-    Layout.preferredHeight: implicitHeight
-    Layout.maximumHeight: implicitHeight
-    Layout.fillWidth: false
-    Layout.fillHeight: false
+    compactRepresentation: PlasmaComponents3.ToolButton {
+        readonly property int fakeIndex: 0
+        Layout.fillWidth: false
+        Layout.fillHeight: false
+        Layout.minimumWidth: implicitWidth
+        Layout.maximumWidth: implicitWidth
+        enabled: appMenuModel.menuAvailable
+        checkable: appMenuModel.menuAvailable && Plasmoid.currentIndex === fakeIndex
+        checked: checkable
+        icon.name: "application-menu"
+
+        display: PlasmaComponents3.AbstractButton.IconOnly
+        text: Plasmoid.title
+        Accessible.description: root.toolTipSubText
+
+        onClicked: Plasmoid.trigger(this, 0);
+    }
 
     fullRepresentation: GridLayout {
         id: buttonGrid
 
+        Plasmoid.status: {
+            if (appMenuModel.menuAvailable && Plasmoid.currentIndex > -1 && buttonRepeater.count > 0) {
+                return PlasmaCore.Types.NeedsAttentionStatus;
+            } else {
+                return buttonRepeater.count > 0 || Plasmoid.configuration.compactView ? PlasmaCore.Types.ActiveStatus : PlasmaCore.Types.HiddenStatus;
+            }
+        }
+
         LayoutMirroring.enabled: Application.layoutDirection === Qt.RightToLeft
+        Layout.minimumWidth: implicitWidth
+        Layout.minimumHeight: implicitHeight
+
         flow: root.vertical ? GridLayout.TopToBottom : GridLayout.LeftToRight
         rowSpacing: 0
         columnSpacing: 0
-
-        implicitWidth: childrenRect.width
-        implicitHeight: childrenRect.height
-        Layout.minimumWidth: implicitWidth
-        Layout.preferredWidth: implicitWidth
-        Layout.maximumWidth: implicitWidth
-        Layout.minimumHeight: implicitHeight
-        Layout.preferredHeight: implicitHeight
-        Layout.maximumHeight: implicitHeight
-        Layout.fillWidth: false
-        Layout.fillHeight: false
 
         Binding {
             target: Plasmoid
@@ -65,8 +78,8 @@ PlasmoidItem {
 
         Connections {
             target: Plasmoid
-            function onRequestActivateIndex(index: int): void {
-                const button = menuRepeater.itemAt(index) as MenuDelegate;
+            function onRequestActivateIndex(index: int) {
+                const button = buttonRepeater.itemAt(index) as MenuDelegate;
                 if (button) {
                     button.activated();
                 }
@@ -75,35 +88,41 @@ PlasmoidItem {
 
         Connections {
             target: Plasmoid
-            function onActivated(): void {
-                const button = menuRepeater.itemAt(0) as MenuDelegate;
+            function onActivated() {
+                const button = buttonRepeater.itemAt(0) as MenuDelegate;
                 if (button) {
                     button.activated();
                 }
             }
         }
 
+        PlasmaComponents3.ToolButton {
+            id: noMenuPlaceholder
+            visible: buttonRepeater.count === 0
+            text: Plasmoid.title
+            Layout.fillWidth: root.vertical
+            Layout.fillHeight: !root.vertical
+        }
+
         Repeater {
-            id: menuRepeater
-            model: Plasmoid.model
+            id: buttonRepeater
+            model: appMenuModel.visible ? appMenuModel : null
 
             MenuDelegate {
                 required property int index
-                required property string label
-                required property PlasmaCore.Action activeAction
-
+                required property string activeMenu
+                required property PlasmaCore.Action activeActions
                 readonly property int buttonIndex: index
 
-                Layout.fillWidth: false
-                Layout.fillHeight: root.vertical ? false : true
-                vertical: root.vertical
-                text: activeAction?.text ?? label
-                visible: text.length > 0 && (activeAction?.visible ?? true)
-                enabled: activeAction?.enabled ?? true
-                down: Plasmoid.currentIndex === index
-                menuIsOpen: Plasmoid.currentIndex !== -1
+                Layout.fillWidth: root.vertical
+                Layout.fillHeight: !root.vertical
+                text: activeMenu
                 Kirigami.MnemonicData.active: altState.pressed
 
+                down: Plasmoid.currentIndex === index
+                visible: text !== "" && (activeActions?.visible ?? false)
+
+                menuIsOpen: Plasmoid.currentIndex !== -1
                 onActivated: Plasmoid.trigger(this, index)
 
                 KeyboardIndicator.KeyState {
@@ -111,6 +130,24 @@ PlasmoidItem {
                     key: Qt.Key_Alt
                 }
             }
+        }
+
+        Item {
+            Layout.preferredWidth: 0
+            Layout.preferredHeight: 0
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+        }
+    }
+
+    AppMenuModel {
+        id: appMenuModel
+        containmentStatus: Plasmoid.containment.status
+        screenGeometry: root.screenGeometry
+        allScreens: Plasmoid.configuration.allScreens
+        onRequestActivateIndex: Plasmoid.requestActivateIndex(index)
+        Component.onCompleted: {
+            Plasmoid.model = appMenuModel;
         }
     }
 }
