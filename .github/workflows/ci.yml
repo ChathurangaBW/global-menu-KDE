@@ -48,9 +48,36 @@ jobs:
       - name: Install into staging prefix
         run: cmake --install build --prefix "$GITHUB_WORKSPACE/stage"
       - name: Smoke-test Plasma applet loading
-        env:
-          QT_PLUGIN_PATH: ${{ github.workspace }}/stage/lib/qt6/plugins
-        run: dbus-run-session -- xvfb-run -a plasmawindowed --smoke-test org.chathuranga.globalmenu
+        run: |
+          set +e
+          plugin_path="$GITHUB_WORKSPACE/stage/lib/qt6/plugins"
+          if plasmawindowed --help 2>&1 | grep -q -- '--smoke-test'; then
+              QT_PLUGIN_PATH="$plugin_path" \
+                  dbus-run-session -- xvfb-run -a \
+                  plasmawindowed --smoke-test org.chathuranga.globalmenu \
+                  >plasmawindowed.log 2>&1
+              status=$?
+          else
+              QT_PLUGIN_PATH="$plugin_path" \
+                  timeout --signal=TERM --kill-after=2s 8s \
+                  dbus-run-session -- xvfb-run -a \
+                  plasmawindowed org.chathuranga.globalmenu \
+                  >plasmawindowed.log 2>&1
+              status=$?
+          fi
+          set -e
+
+          cat plasmawindowed.log
+
+          if grep -Eiq \
+              'Could not find requested component|Could not load applet|Error loading QML|QQml[^:]*:.*error|module .* is not installed|failed to load|org\.chathuranga\.globalmenu.*not found' \
+              plasmawindowed.log; then
+              exit 1
+          fi
+
+          if [[ "$status" -ne 0 && "$status" -ne 124 ]]; then
+              exit "$status"
+          fi
       - name: Add artifact installation helpers
         run: |
           install -m0755 scripts/install-prebuilt.sh stage/install.sh
