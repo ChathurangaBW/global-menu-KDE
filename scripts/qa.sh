@@ -65,6 +65,8 @@ assert "implicitWidth: root.hasApplicationMenu ? buttonGrid.implicitWidth : 0" i
 assert "implicitHeight: root.hasApplicationMenu ? buttonGrid.implicitHeight : 0" in main_qml
 assert "Layout.maximumWidth: root.implicitWidth" in main_qml
 assert "Layout.maximumHeight: root.implicitHeight" in main_qml
+assert "LayoutMirroring.enabled: Application.layoutDirection === Qt.RightToLeft" in main_qml
+assert "function onActivated(): void" in main_qml
 assert "noMenuPlaceholder" not in main_qml
 assert "activeAction" in main_qml
 assert "activeAction?.text" in main_qml
