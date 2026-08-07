@@ -16,6 +16,12 @@
   <img src="docs/screenshots/panel-states.svg" alt="Global Menu KDE switching between desktop fallback and Dolphin application menu" width="100%">
 </p>
 
+## Full desktop screenshot
+
+<p align="center">
+  <img src="docs/screenshots/Screenshot_20260807_234220.png" alt="KDE Plasma desktop with Global Menu KDE widget in panel" width="100%">
+</p>
+
 > **One panel. Native KDE behavior. One added state.**  
 > When no application exports a global menu, the applet shows a useful desktop fallback. When Dolphin, Kate, KWrite, or another compatible application becomes active, KDE's normal exported application menu takes over automatically.
 
