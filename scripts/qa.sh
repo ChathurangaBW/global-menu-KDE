@@ -115,9 +115,9 @@ assert "QActionGroup" in model_cpp
 assert "m_sourceGeneration" in model_header
 assert "sourceGeneration != m_sourceGeneration" in model_cpp
 assert "GlobalMenuModel::property" in property_cpp
-assert "applyCachedProperties" in model_cpp
+assert "applyActionProperties" in model_cpp
 assert "m_actionsById" in model_header
-assert "m_propertiesById" in model_header
+assert "m_itemProperties" in model_header
 
 assert "DBusMenuShortcut::toKeySequence" in dbus_types_cpp
 assert "Control" in dbus_types_cpp and "Super" in dbus_types_cpp
