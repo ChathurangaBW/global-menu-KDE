@@ -1,80 +1,69 @@
-// SPDX-FileCopyrightText: 2020 Carson Black <uhhadd@gmail.com>
-// SPDX-FileCopyrightText: 2026 ChathurangaBW
-// SPDX-License-Identifier: GPL-2.0-or-later
+/*
+ * SPDX-FileCopyrightText: 2020 Carson Black <uhhadd@gmail.com>
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ */
 
 import QtQuick
 import QtQuick.Controls
 
 import org.kde.ksvg as KSvg
-import org.kde.plasma.components as PlasmaComponents
+import org.kde.plasma.components as PC3
 import org.kde.kirigami as Kirigami
 
 AbstractButton {
-    id: control
+    id: controlRoot
 
     property bool menuIsOpen: false
-    property bool vertical: false
+
     signal activated()
 
+    // QMenu opens on press, so replicate the native Global Menu behavior.
     hoverEnabled: true
-    onHoveredChanged: if (hovered && menuIsOpen) {
-        activated();
-    }
+
+    onHoveredChanged: if (hovered && menuIsOpen) { activated(); }
     onPressed: activated()
 
-    enum VisualState {
+    enum State {
         Rest,
         Hover,
         Down
     }
 
-    readonly property int visualState: {
+    property int menuState: {
         if (down) {
-            return MenuDelegate.VisualState.Down;
+            return MenuDelegate.State.Down;
+        } else if (hovered && !menuIsOpen) {
+            return MenuDelegate.State.Hover;
         }
-        if (hovered && !menuIsOpen) {
-            return MenuDelegate.VisualState.Hover;
-        }
-        return MenuDelegate.VisualState.Rest;
+        return MenuDelegate.State.Rest;
     }
 
     Kirigami.MnemonicData.controlType: Kirigami.MnemonicData.SecondaryControl
     Kirigami.MnemonicData.label: text
 
-    // Keep the strip visually close to a desktop menubar: compact vertically,
-    // but with enough horizontal separation for File / Edit / View / … labels.
-    topPadding: Math.max(frame.margins.top, Kirigami.Units.smallSpacing / 2)
-    bottomPadding: Math.max(frame.margins.bottom, Kirigami.Units.smallSpacing / 2)
-    leftPadding: Math.max(
-        frame.margins.left,
-        control.vertical ? Kirigami.Units.smallSpacing : Kirigami.Units.smallSpacing * 2)
-    rightPadding: Math.max(
-        frame.margins.right,
-        control.vertical ? Kirigami.Units.smallSpacing : Kirigami.Units.smallSpacing * 2)
+    topPadding: rest.margins.top
+    leftPadding: rest.margins.left
+    rightPadding: rest.margins.right
+    bottomPadding: rest.margins.bottom
 
-    Accessible.description: qsTr("Open application menu")
+    Accessible.description: i18nc("@info:usagetip", "Open a menu")
 
     background: KSvg.FrameSvgItem {
-        id: frame
+        id: rest
         imagePath: "widgets/menubaritem"
-        prefix: switch (control.visualState) {
-        case MenuDelegate.VisualState.Down:
-            return "pressed";
-        case MenuDelegate.VisualState.Hover:
-            return "hover";
-        default:
-            return "normal";
+        prefix: switch (controlRoot.menuState) {
+            case MenuDelegate.State.Down: return "pressed";
+            case MenuDelegate.State.Hover: return "hover";
+            case MenuDelegate.State.Rest: return "normal";
         }
     }
 
-    contentItem: PlasmaComponents.Label {
-        text: control.Kirigami.MnemonicData.richTextLabel
+    contentItem: PC3.Label {
+        text: controlRoot.Kirigami.MnemonicData.richTextLabel
         textFormat: Text.StyledText
         verticalAlignment: Text.AlignVCenter
-        horizontalAlignment: Text.AlignHCenter
         elide: Text.ElideRight
-        color: control.visualState === MenuDelegate.VisualState.Rest
-            ? Kirigami.Theme.textColor
-            : Kirigami.Theme.highlightedTextColor
+        color: controlRoot.menuState === MenuDelegate.State.Rest ? Kirigami.Theme.textColor : Kirigami.Theme.highlightedTextColor
     }
 }

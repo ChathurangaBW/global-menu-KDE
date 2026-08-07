@@ -6,7 +6,7 @@
             }
         ],
         "Category": "Windows and Tasks",
-        "Description": "Shows a Plasma desktop fallback menu and the active application's exported menu bar",
+        "Description": "KDE Global Menu with a desktop fallback when no application menu is available",
         "FormFactors": [
             "desktop"
         ],
@@ -14,7 +14,7 @@
         "Id": "org.chathuranga.globalmenu",
         "License": "GPL-2.0-or-later",
         "Name": "Global Menu KDE",
-        "Version": "1.0.0",
+        "Version": "0.1.0",
         "Website": "https://github.com/ChathurangaBW/global-menu-KDE"
     },
     "X-Plasma-API-Minimum-Version": "6.0"
