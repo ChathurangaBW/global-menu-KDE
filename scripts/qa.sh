@@ -60,14 +60,36 @@ prebuilt_installer = (root / "scripts/install-prebuilt.sh").read_text(encoding="
 smoke_script = (root / "scripts/smoke-plasmawindowed.sh").read_text(encoding="utf-8")
 
 assert "HiddenStatus" in main_qml
+assert "hasApplicationMenu" in main_qml
+assert "implicitWidth: root.hasApplicationMenu ? buttonGrid.implicitWidth : 0" in main_qml
+assert "implicitHeight: root.hasApplicationMenu ? buttonGrid.implicitHeight : 0" in main_qml
+assert "Layout.maximumWidth: root.implicitWidth" in main_qml
+assert "Layout.maximumHeight: root.implicitHeight" in main_qml
 assert "noMenuPlaceholder" not in main_qml
-assert "AppleMenu" not in main_qml
 assert "activeAction" in main_qml
 assert "activeAction?.text" in main_qml
 assert "KeyboardIndicator.KeyState" in main_qml
 assert "required property PlasmaCore.Action action" not in main_qml
 assert "MnemonicData.richTextLabel" in delegate_qml
 assert "MnemonicData.controlType" in delegate_qml
+assert "property bool vertical" in delegate_qml
+assert "Kirigami.Units.smallSpacing * 2" in delegate_qml
+
+# This applet is intentionally application-menu-only. System controls shown in
+# early visual concepts must never become part of the implementation.
+qml_surface = main_qml + "\n" + delegate_qml
+for forbidden in (
+    "AppleMenu",
+    "SystemStatus",
+    "KRunner",
+    "MPRIS",
+    "WorkspaceIndicator",
+    "ClockArea",
+    "Recent Items",
+    "System Settings",
+    "Now Playing",
+):
+    assert forbidden not in qml_surface, f"out-of-scope UI found: {forbidden}"
 
 assert "sourceActionForIndex" in applet_cpp
 assert "m_model->menuClosed(m_currentIndex);\n        setCurrentIndex(-1);" in applet_cpp
@@ -93,6 +115,9 @@ assert "QActionGroup" in model_cpp
 assert "m_sourceGeneration" in model_header
 assert "sourceGeneration != m_sourceGeneration" in model_cpp
 assert "GlobalMenuModel::property" in property_cpp
+assert "applyCachedProperties" in model_cpp
+assert "m_actionsById" in model_header
+assert "m_propertiesById" in model_header
 
 assert "DBusMenuShortcut::toKeySequence" in dbus_types_cpp
 assert "Control" in dbus_types_cpp and "Super" in dbus_types_cpp
@@ -103,6 +128,7 @@ assert "GetLayout" in model_test and "AboutToShow" in model_test
 assert 'QStringLiteral("opened")' in model_test
 assert 'QStringLiteral("closed")' in model_test
 assert 'QStringLiteral("clicked")' in model_test
+assert "ItemsPropertiesUpdated" in model_test
 
 assert "ctest --test-dir build --output-on-failure" in workflow
 assert "run: bash ./scripts/qa.sh --static" in workflow
@@ -125,7 +151,7 @@ assert "dbus-run-session" in smoke_script
 assert "Could not find requested component" in smoke_script
 assert "status" in smoke_script and "124" in smoke_script
 
-print("metadata, scope, protocol, lifecycle, integration, packaging, and applet-load checks passed")
+print("metadata, application-menu-only scope, protocol, lifecycle, integration, packaging, and applet-load checks passed")
 PY
 
 if command -v shellcheck >/dev/null 2>&1; then
