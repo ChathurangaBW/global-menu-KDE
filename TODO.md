@@ -31,6 +31,11 @@
 - [x] Reusable version-adaptive Plasma applet smoke launcher.
 - [x] Installable CI artifact with prebuilt install/uninstall helpers.
 - [x] Artifact structure, ELF metadata, dependency list, install, environment-hook, and uninstall smoke tests.
+- [x] Rich repository README with feature matrix, architecture, installation, QA, troubleshooting, and development instructions.
+- [x] Repository-native application-menu-only preview image embedded in README.
+- [x] Dedicated installation/troubleshooting, QA, and architecture documentation under `docs/`.
+- [x] CI packaging includes README and documentation assets.
+- [x] Static QA validates documentation links, screenshot scope, and packaged docs.
 
 ## Desktop QA still required
 
@@ -51,5 +56,6 @@
 
 ## Follow-up hardening
 
+- [ ] Replace the repository preview with captured real-session screenshots after desktop QA.
 - [ ] Add screenshot-based visual regression tests after desktop layout baselines are captured.
 - [ ] Publish a signed release after desktop QA.
