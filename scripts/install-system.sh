@@ -9,11 +9,19 @@ LEGACY_ENV_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/plasma-workspace/env/global-m
 SYSTEM_MANIFEST_DIR=/var/lib/global-menu-kde
 SYSTEM_MANIFEST="$SYSTEM_MANIFEST_DIR/install_manifest.txt"
 SYSTEM_UNINSTALLER=/usr/local/bin/global-menu-kde-uninstall
+LDD_REPORT=""
 
 fail() {
     printf 'global-menu-kde: %s\n' "$*" >&2
     exit 1
 }
+
+cleanup() {
+    if [[ -n "$LDD_REPORT" ]]; then
+        rm -f -- "$LDD_REPORT"
+    fi
+}
+trap cleanup EXIT
 
 if [[ ${EUID:-$(id -u)} -eq 0 ]]; then
     fail "run this installer as your regular desktop user, without sudo"
@@ -31,7 +39,7 @@ as_root() {
     "${ROOT[@]}" "$@"
 }
 
-for command_name in cmake ninja ctest ldd; do
+for command_name in cmake ninja ctest ldd find mktemp; do
     command -v "$command_name" >/dev/null 2>&1 || fail "required command not found: $command_name"
 done
 
@@ -56,11 +64,24 @@ if [[ -z "$PLUGIN_FILE" || ! -f "$PLUGIN_FILE" ]]; then
 fi
 
 printf 'Auditing installed plugin dependencies...\n'
-if ldd "$PLUGIN_FILE" | tee /tmp/global-menu-kde-ldd.txt | grep -q 'not found'; then
-    cat /tmp/global-menu-kde-ldd.txt >&2
+LDD_REPORT=$(mktemp -t global-menu-kde-ldd.XXXXXXXX)
+if ldd "$PLUGIN_FILE" | tee "$LDD_REPORT" | grep -q 'not found'; then
+    cat "$LDD_REPORT" >&2
     fail "installed plugin has unresolved shared-library dependencies"
 fi
-rm -f /tmp/global-menu-kde-ldd.txt
+rm -f -- "$LDD_REPORT"
+LDD_REPORT=""
+
+# A distro or Qt upgrade can move the system plugin directory. Remove any
+# older copy of this exact plugin ID only after the new copy has installed and
+# passed its dependency audit, so reinstall/upgrade cannot leave two native
+# applet plugins discoverable at once.
+while IFS= read -r stale_plugin; do
+    [[ -n "$stale_plugin" ]] || continue
+    [[ "$stale_plugin" == "$PLUGIN_FILE" ]] && continue
+    as_root rm -f -- "$stale_plugin"
+    printf 'Removed stale native plugin: %s\n' "$stale_plugin"
+done < <(find /usr -type f -path '*/plasma/applets/org.chathuranga.globalmenu.so' -print 2>/dev/null)
 
 # Persist the exact CMake manifest because curl|bash installations use a
 # temporary source checkout. This keeps uninstall deterministic afterwards.
