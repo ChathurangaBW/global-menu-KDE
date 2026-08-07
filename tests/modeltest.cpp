@@ -9,6 +9,7 @@
 #include <QDBusVirtualObject>
 #include <QMenu>
 #include <QTest>
+#include <QVariant>
 
 namespace
 {
@@ -95,7 +96,7 @@ public:
 
         if (message.member() == QLatin1String("AboutToShow")) {
             aboutToShowIds.append(message.arguments().at(0).toInt());
-            connection.send(message.createReply({false}));
+            connection.send(message.createReply(QVariant(false)));
             return true;
         }
 
