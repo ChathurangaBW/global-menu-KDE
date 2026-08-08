@@ -1,0 +1,21 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "ChathurangaBW"
+            }
+        ],
+        "Category": "Windows and Tasks",
+        "Description": "KDE Global Menu with a desktop fallback when no application menu is available",
+        "FormFactors": [
+            "desktop"
+        ],
+        "Icon": "show-menu",
+        "Id": "org.chathuranga.globalmenu",
+        "License": "GPL-2.0-or-later",
+        "Name": "Global Menu KDE",
+        "Version": "1.0.0",
+        "Website": "https://github.com/ChathurangaBW/global-menu-KDE"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0"
+}

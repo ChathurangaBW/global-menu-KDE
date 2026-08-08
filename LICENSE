@@ -1,0 +1,22 @@
+Global Menu KDE contains code under multiple compatible free-software licenses.
+
+Project-specific additions, including the desktop fallback menu, use:
+- SPDX-License-Identifier: GPL-2.0-or-later
+
+Files derived from KDE Plasma's native Global Menu applet retain KDE's original
+license declarations, typically:
+- SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only OR LicenseRef-KDE-Accepted-GPL
+- SPDX-License-Identifier: GPL-2.0-or-later
+
+The vendored private dbusmenu importer under third_party/libdbusmenuqt retains
+its Canonical/KDE license:
+- SPDX-License-Identifier: LGPL-2.0-or-later
+
+The SPDX identifier in each source file is authoritative for that file. No
+upstream copyright or license notice is removed by this repository.
+
+License texts:
+- https://spdx.org/licenses/GPL-2.0-only.html
+- https://spdx.org/licenses/GPL-2.0-or-later.html
+- https://spdx.org/licenses/GPL-3.0-only.html
+- https://spdx.org/licenses/LGPL-2.0-or-later.html
