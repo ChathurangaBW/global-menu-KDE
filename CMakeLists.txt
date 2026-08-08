@@ -48,6 +48,12 @@ set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE")
 set(CPACK_RESOURCE_FILE_README "${CMAKE_SOURCE_DIR}/README.md")
 set(CPACK_STRIP_FILES TRUE)
 
+set(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_BINARY_DIR}/cpack-package-description.txt")
+file(WRITE "${CPACK_PACKAGE_DESCRIPTION_FILE}" [=[Native KDE Plasma 6 Global Menu applet.
+Shows a desktop fallback when no application exports a menu.
+Switches back to the real application menu when one becomes available.
+]=])
+
 set(CPACK_DEBIAN_PACKAGE_SECTION "kde")
 set(CPACK_DEBIAN_PACKAGE_PRIORITY "optional")
 set(CPACK_DEBIAN_PACKAGE_DESCRIPTION [=[This Plasma applet exports the active application's global menu into a
@@ -59,6 +65,9 @@ set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
 
 set(CPACK_RPM_PACKAGE_LICENSE "GPL-2.0-or-later")
 set(CPACK_RPM_PACKAGE_GROUP "User Interface/Desktops")
+set(CPACK_RPM_PACKAGE_DESCRIPTION [=[Native KDE Plasma 6 Global Menu applet.
+Shows a desktop fallback when no application exports a menu.
+Switches back to the real application menu when one becomes available.]=])
 set(CPACK_RPM_PACKAGE_AUTOREQPROV ON)
 set(CPACK_RPM_FILE_NAME RPM-DEFAULT)
 
