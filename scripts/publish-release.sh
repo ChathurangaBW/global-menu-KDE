@@ -22,7 +22,10 @@ trap 'rm -f "$notes_file"' EXIT
 sed "s/@VERSION@/${version}/g" "$notes_template" > "$notes_file"
 
 shopt -s nullglob
-assets=("$assets_dir"/*)
+assets=()
+while IFS= read -r -d '' asset; do
+    assets+=("$asset")
+done < <(find "$assets_dir" -maxdepth 1 -type f -print0 | sort -z)
 shopt -u nullglob
 if (( ${#assets[@]} == 0 )); then
     echo "No release assets found in $assets_dir" >&2
