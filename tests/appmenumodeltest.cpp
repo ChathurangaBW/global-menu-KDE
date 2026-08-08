@@ -221,13 +221,16 @@ void AppMenuModelTest::fallbackApplicationExporterLossFallback()
     aboutAction->trigger();
     QTRY_VERIFY_WITH_TIMEOUT(fakeMenu.hasEvent(2, QStringLiteral("clicked")), 5000);
 
-    // Exercise the real service watcher path: losing the exporting D-Bus
-    // connection must return the applet to the desktop fallback without an
-    // explicit model clear from the test.
-    QDBusConnection::disconnectFromBus(connectionName);
+    // Exercise the real service-watcher path. Releasing the well-known name
+    // produces the same owner-loss signal that the model sees when an
+    // application exporter exits, without relying on QDBusConnection wrapper
+    // lifetime/refcount details in the test process.
+    QVERIFY(exporter.unregisterService(serviceName));
     QTRY_VERIFY_WITH_TIMEOUT(model.usingDesktopFallback(), 5000);
     QTRY_COMPARE_WITH_TIMEOUT(model.rowCount(), 7, 5000);
     verifyDesktopHeadings(model);
+
+    QDBusConnection::disconnectFromBus(connectionName);
 }
 
 void AppMenuModelTest::emptyApplicationMenuKeepsFallbackUntilUsable()
@@ -259,9 +262,11 @@ void AppMenuModelTest::emptyApplicationMenuKeepsFallbackUntilUsable()
     QTRY_VERIFY_WITH_TIMEOUT(model.rowCount() >= 2, 5000);
     QCOMPARE(plainLabel(model.data(model.index(0, 0), AppMenuModel::MenuRole).toString()), QStringLiteral("File"));
 
-    QDBusConnection::disconnectFromBus(connectionName);
+    QVERIFY(exporter.unregisterService(serviceName));
     QTRY_VERIFY_WITH_TIMEOUT(model.usingDesktopFallback(), 5000);
     verifyDesktopHeadings(model);
+
+    QDBusConnection::disconnectFromBus(connectionName);
 }
 
 QTEST_MAIN(AppMenuModelTest)
