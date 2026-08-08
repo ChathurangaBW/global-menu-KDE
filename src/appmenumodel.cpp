@@ -337,9 +337,6 @@ void AppMenuModel::connectApplicationActions()
 void AppMenuModel::updateApplicationMenu(const QString &serviceName, const QString &menuObjectPath)
 {
     if (m_serviceName == serviceName && m_menuObjectPath == menuObjectPath) {
-        if (m_importer) {
-            QMetaObject::invokeMethod(m_importer.get(), "updateMenu", Qt::QueuedConnection);
-        }
         return;
     }
 
@@ -362,7 +359,6 @@ void AppMenuModel::updateApplicationMenu(const QString &serviceName, const QStri
     m_serviceWatcher->setWatchedServices(QStringList({m_serviceName}));
 
     m_importer = std::make_unique<KDBusMenuImporter>(serviceName, menuObjectPath);
-    QMetaObject::invokeMethod(m_importer.get(), "updateMenu", Qt::QueuedConnection);
 
     connect(m_importer.get(), &DBusMenuImporter::menuUpdated, this, [this](QMenu *menu) {
         if (!m_importer) {

@@ -6,6 +6,9 @@ add_executable(desktopfallback_test
 )
 
 target_compile_features(desktopfallback_test PRIVATE cxx_std_20)
+target_compile_definitions(desktopfallback_test PRIVATE
+    TRANSLATION_DOMAIN="plasma_applet_org.chathuranga.globalmenu"
+)
 target_include_directories(desktopfallback_test PRIVATE ${CMAKE_SOURCE_DIR}/src)
 target_link_libraries(desktopfallback_test PRIVATE
     Qt::Core
@@ -16,9 +19,12 @@ target_link_libraries(desktopfallback_test PRIVATE
     KF6::I18n
 )
 
-add_test(NAME desktopfallback_test COMMAND desktopfallback_test)
+add_test(NAME desktopfallback_test
+    COMMAND dbus-run-session -- $<TARGET_FILE:desktopfallback_test>
+)
 set_tests_properties(desktopfallback_test PROPERTIES
     ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
+    TIMEOUT 30
 )
 
 add_executable(appmenumodel_test
@@ -28,6 +34,9 @@ add_executable(appmenumodel_test
 )
 
 target_compile_features(appmenumodel_test PRIVATE cxx_std_20)
+target_compile_definitions(appmenumodel_test PRIVATE
+    TRANSLATION_DOMAIN="plasma_applet_org.chathuranga.globalmenu"
+)
 target_include_directories(appmenumodel_test PRIVATE
     ${CMAKE_SOURCE_DIR}/src
     ${CMAKE_SOURCE_DIR}/third_party/libdbusmenuqt
