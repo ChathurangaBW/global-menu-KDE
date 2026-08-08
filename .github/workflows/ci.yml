@@ -314,8 +314,15 @@ jobs:
               ;;
             zypper)
               zypper --non-interactive refresh
+              set +e
               zypper --non-interactive install --no-recommends \
                 git sudo ca-certificates plasma6-workspace dbus-1 dbus-1-tools findutils
+              zypper_status=$?
+              set -e
+              if [ "$zypper_status" -ne 0 ]; then
+                test -x /usr/bin/plasmashell
+                test -x /usr/bin/dbus-run-session
+              fi
               ;;
           esac
           command -v plasmashell

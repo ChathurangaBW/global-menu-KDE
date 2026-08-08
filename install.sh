@@ -117,7 +117,7 @@ install_dependencies() {
         as_root env DEBIAN_FRONTEND=noninteractive apt-get install -y \
             git build-essential cmake ninja-build extra-cmake-modules \
             qt6-base-dev qt6-base-dev-tools qt6-declarative-dev \
-            libkf6config-dev libkf6i18n-dev libkf6windowsystem-dev \
+            libkf6config-dev libkf6coreaddons-dev libkf6i18n-dev libkf6windowsystem-dev \
             libplasma-dev plasma-workspace-dev plasma-workspace dbus
         return
     fi
@@ -127,7 +127,7 @@ install_dependencies() {
         as_root dnf -y install \
             git gcc-c++ cmake ninja-build extra-cmake-modules \
             qt6-qtbase-devel qt6-qtdeclarative-devel \
-            kf6-kconfig-devel kf6-ki18n-devel kf6-kwindowsystem-devel \
+            kf6-kconfig-devel kf6-kcoreaddons-devel kf6-ki18n-devel kf6-kwindowsystem-devel \
             libplasma-devel plasma-workspace-devel plasma-workspace dbus-daemon
         return
     fi
@@ -146,7 +146,7 @@ install_dependencies() {
         as_root zypper --non-interactive install --no-recommends \
             git gcc-c++ cmake ninja kf6-extra-cmake-modules \
             qt6-base-devel qt6-declarative-devel \
-            kf6-kconfig-devel kf6-ki18n-devel kf6-kwindowsystem-devel \
+            kf6-kconfig-devel kf6-kcoreaddons-devel kf6-ki18n-devel kf6-kwindowsystem-devel \
             libplasma6-devel plasma6-workspace-devel plasma6-workspace dbus-1 dbus-1-tools
         return
     fi

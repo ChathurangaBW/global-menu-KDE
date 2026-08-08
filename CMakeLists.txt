@@ -20,6 +20,7 @@ include(CTest)
 find_package(Qt6 ${QT_MIN_VERSION} REQUIRED COMPONENTS Core DBus Gui Quick Widgets)
 find_package(KF6 ${KF6_MIN_VERSION} REQUIRED COMPONENTS Config I18n WindowSystem)
 find_package(Plasma ${PLASMA_MIN_VERSION} REQUIRED)
+include(PlasmaMacros)
 find_package(LibTaskManager REQUIRED CONFIG)
 
 if(BUILD_TESTING)
