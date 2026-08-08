@@ -208,7 +208,7 @@ jobs:
             qt6-base-dev qt6-declarative-dev \
             libkf6config-dev libkf6i18n-dev libkf6windowsystem-dev \
             libplasma-dev plasma-workspace-dev plasma-workspace \
-            dbus-daemon dbus-x11 xvfb file dpkg-dev fakeroot lintian ca-certificates
+            dbus-daemon dbus-x11 xvfb xauth file dpkg-dev fakeroot lintian ca-certificates
 
       - name: Install Fedora build/runtime dependencies
         if: matrix.family == 'rpm'
@@ -218,9 +218,9 @@ jobs:
           dnf -y install \
             git gcc-c++ cmake ninja-build extra-cmake-modules \
             qt6-qtbase-devel qt6-qtdeclarative-devel \
-            kf6-kconfig-devel kf6-ki18n-devel kf6-kwindowsystem-devel \
+            kf6-kconfig-devel kf6-kcoreaddons-devel kf6-ki18n-devel kf6-kwindowsystem-devel \
             libplasma-devel plasma-workspace-devel plasma-workspace \
-            rpm-build rpmlint dbus-daemon xorg-x11-server-Xvfb file findutils which
+            rpm-build rpmlint dbus-daemon xorg-x11-server-Xvfb xauth file findutils which
 
       - uses: actions/checkout@v4
 
@@ -292,8 +292,13 @@ jobs:
           plugin=$(find /usr -type f -name 'org.chathuranga.globalmenu.so' -print -quit)
           test -n "$plugin"
           file "$plugin"
+          set +e
           ldd "$plugin" | tee /tmp/package-ldd.txt
+          ldd_status=${PIPESTATUS[0]}
+          set -e
+          test -s /tmp/package-ldd.txt
           ! grep -q 'not found' /tmp/package-ldd.txt
+          test "$ldd_status" -eq 0
           if command -v kbuildsycoca6 >/dev/null 2>&1; then
             kbuildsycoca6 --noincremental || true
           fi
@@ -351,7 +356,7 @@ jobs:
           qt6-base qt6-declarative
           kconfig kcoreaddons ki18n kwindowsystem
           libplasma plasma-workspace
-          xorg-server-xvfb dbus file namcap
+          xorg-server-xvfb xauth dbus file namcap
 
       - uses: actions/checkout@v4
         with:
@@ -390,11 +395,16 @@ jobs:
           set -euo pipefail
           pacman -U --noconfirm dist/*.pkg.tar.zst
           pacman -Q global-menu-kde
+          pacman -Qql global-menu-kde | grep -Fxq '/usr/share/doc/global-menu-kde/CHANGELOG.md'
           plugin=$(find /usr -type f -name 'org.chathuranga.globalmenu.so' -print -quit)
           test -n "$plugin"
+          set +e
           ldd "$plugin" | tee /tmp/arch-ldd.txt
+          ldd_status=${PIPESTATUS[0]}
+          set -e
+          test -s /tmp/arch-ldd.txt
           ! grep -q 'not found' /tmp/arch-ldd.txt
-          test -f /usr/share/doc/global-menu-kde/CHANGELOG.md
+          test "$ldd_status" -eq 0
 
       - name: Native Arch discovery smoke with no QT_PLUGIN_PATH
         shell: bash
