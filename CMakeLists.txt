@@ -20,7 +20,12 @@ include(CTest)
 find_package(Qt6 ${QT_MIN_VERSION} REQUIRED COMPONENTS Core DBus Gui Quick Widgets)
 find_package(KF6 ${KF6_MIN_VERSION} REQUIRED COMPONENTS Config I18n WindowSystem)
 find_package(Plasma ${PLASMA_MIN_VERSION} REQUIRED)
-include(PlasmaMacros)
+if(NOT COMMAND plasma_add_applet)
+    find_file(PLASMA_MACROS_FILE PlasmaMacros.cmake HINTS "${Plasma_DIR}")
+    if(PLASMA_MACROS_FILE)
+        include("${PLASMA_MACROS_FILE}")
+    endif()
+endif()
 find_package(LibTaskManager REQUIRED CONFIG)
 
 if(BUILD_TESTING)
@@ -35,3 +40,4 @@ if(BUILD_TESTING)
 endif()
 
 feature_summary(WHAT ALL FATAL_ON_MISSING_REQUIRED_PACKAGES)
+
