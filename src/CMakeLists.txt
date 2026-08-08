@@ -1,6 +1,4 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
-add_definitions(-DTRANSLATION_DOMAIN=\"plasma_applet_org.chathuranga.globalmenu\")
-
 plasma_add_applet(org.chathuranga.globalmenu
     QML_SOURCES
         qml/configGeneral.qml
@@ -17,6 +15,9 @@ plasma_add_applet(org.chathuranga.globalmenu
 )
 
 target_compile_features(org.chathuranga.globalmenu PRIVATE cxx_std_20)
+target_compile_definitions(org.chathuranga.globalmenu PRIVATE
+    TRANSLATION_DOMAIN="plasma_applet_org.chathuranga.globalmenu"
+)
 
 target_link_libraries(org.chathuranga.globalmenu PRIVATE
     Qt::Core

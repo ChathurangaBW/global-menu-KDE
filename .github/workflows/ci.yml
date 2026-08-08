@@ -315,7 +315,7 @@ jobs:
             zypper)
               zypper --non-interactive refresh
               zypper --non-interactive install --no-recommends \
-                git sudo ca-certificates plasma6-workspace dbus-1 findutils
+                git sudo ca-certificates plasma6-workspace dbus-1 dbus-1-tools findutils
               ;;
           esac
           command -v plasmashell

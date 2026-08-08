@@ -119,7 +119,7 @@ For dependency details, manual build commands, upgrades, and legacy-cleanup note
 
 ## Distribution model
 
-There is intentionally no `.deb`, `.rpm`, `.pkg.tar.zst`, or architecture-specific GitHub Release requirement. `main` is the install source. Building on the target machine avoids pretending that one Plasma C++ plugin binary is portable across incompatible Qt/KF6/Plasma ABIs.
+There is intentionally no `.deb`, `.rpm`, `.pkg.tar.zst`, or architecture-specific binary package. Releases publish a source archive plus `SHA256SUMS`; `main` remains installable directly. Building on the target machine avoids pretending that one Plasma C++ plugin binary is portable across incompatible Qt/KF6/Plasma ABIs.
 
 This is portable source installation, not universal binary compatibility. A supported machine still needs Plasma 6 and distro-provided development packages.
 
@@ -159,6 +159,7 @@ The CI contract checks more than rendering:
 - ShellCheck and Bash syntax validation;
 - end-to-end `install.sh --no-deps` installation as a non-root user;
 - persistent uninstall manifest and CLI uninstall verification.
+- source-release archive and checksum publishing from version tags.
 
 Automated headless tests do not replace a real Plasma panel test. See **[docs/QA.md](docs/QA.md)** for the manual desktop matrix.
 
@@ -192,6 +193,7 @@ Automated headless tests do not replace a real Plasma panel test. See **[docs/QA
 - **[Installation and upgrades](docs/INSTALL.md)**
 - **[Architecture](docs/ARCHITECTURE.md)**
 - **[QA validation](docs/QA.md)**
+- **[Upstream provenance](UPSTREAM.md)**
 - **[Visual: panel state switching](docs/screenshots/panel-states.svg)**
 - **[Visual: desktop File menu](docs/screenshots/desktop-file-menu.svg)**
 
@@ -199,4 +201,4 @@ Automated headless tests do not replace a real Plasma panel test. See **[docs/QA
 
 The native applet portions are derived from KDE Plasma Workspace's Global Menu applet and retain KDE's original SPDX copyright/license declarations. The vendored `libdbusmenuqt` files retain their Canonical/KDE `LGPL-2.0-or-later` declarations. Project-specific fallback code uses `GPL-2.0-or-later`.
 
-See `LICENSE` and each source file's SPDX header for the authoritative license terms.
+See `LICENSE`, `UPSTREAM.md`, and each source file's SPDX header for the authoritative license/provenance terms.

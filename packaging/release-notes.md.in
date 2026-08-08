@@ -1,0 +1,16 @@
+# Global Menu KDE @VERSION@
+
+This release provides the Plasma 6 source installer for Global Menu KDE.
+
+Assets:
+
+- `global-menu-kde-@VERSION@.tar.gz`: repository source archive for the tested release commit.
+- `SHA256SUMS`: SHA-256 checksums for release assets.
+
+Install from the extracted source as a regular desktop user:
+
+```bash
+bash ./install.sh
+```
+
+The project does not publish distro-specific binary packages. The native applet is compiled on the target machine against that machine's Qt, KF6, Plasma, and LibTaskManager ABI.

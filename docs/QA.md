@@ -1,6 +1,6 @@
 # QA validation
 
-Global Menu KDE uses one rolling source-install path. There is no distro-package release gate: the important contract is that the exact repository state builds, tests, installs, is discovered by Plasma without plugin-path hacks, and can be removed cleanly.
+Global Menu KDE uses one rolling source-install path plus tagged source-release archives. There is no distro binary-package release gate: the important contract is that the exact repository state builds, tests, installs, is discovered by Plasma without plugin-path hacks, can be removed cleanly, and produces a checksum-verified source archive for tags.
 
 ## Functional contract
 

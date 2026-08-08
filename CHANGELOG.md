@@ -1,6 +1,6 @@
 # Changelog
 
-Notable changes to the rolling `main` branch are documented here. Global Menu KDE is distributed through its source installer rather than versioned distro packages or GitHub Release assets.
+Notable changes to the rolling `main` branch are documented here. Global Menu KDE is distributed through its source installer and source-release archives rather than versioned distro binary packages.
 
 ## Current
 
@@ -16,6 +16,7 @@ Notable changes to the rolling `main` branch are documented here. Global Menu KD
 - `--no-deps` installation path for other Plasma 6 distributions.
 - Persistent install manifest and `global-menu-kde-uninstall` helper.
 - Rich installation, architecture, QA, and visual documentation.
+- Source-release archive and checksum workflow for version tags.
 
 ### Fixed
 
@@ -26,5 +27,5 @@ Notable changes to the rolling `main` branch are documented here. Global Menu KD
 
 - Removed CPack DEB/RPM generation.
 - Removed Arch package metadata and Debian package metadata.
-- Removed the native-package/GitHub Release production workflow.
+- Removed the native binary-package production workflow.
 - The supported distribution mechanism is now a host-compiled Plasma 6 source install from `main`.

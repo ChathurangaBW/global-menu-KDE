@@ -1,0 +1,41 @@
+name: Source Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  source-release:
+    name: Source release assets
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate release version
+        shell: bash
+        run: |
+          set -euo pipefail
+          version=$(sed -n 's/^project(global-menu-kde VERSION \([^ ]*\).*/\1/p' CMakeLists.txt)
+          test -n "$version"
+          if [[ "${GITHUB_REF_TYPE:-}" == tag ]]; then
+            test "${GITHUB_REF_NAME}" = "v${version}"
+          fi
+
+      - name: Build source release assets
+        shell: bash
+        run: bash ./scripts/package-source-release.sh
+
+      - name: Publish GitHub Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_SHA: ${{ github.sha }}
+        run: bash ./scripts/publish-release.sh
