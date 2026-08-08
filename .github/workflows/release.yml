@@ -218,7 +218,7 @@ jobs:
           dnf -y install \
             git gcc-c++ cmake ninja-build extra-cmake-modules \
             qt6-qtbase-devel qt6-qtdeclarative-devel \
-            kf6-kconfig-devel kf6-kcoreaddons-devel kf6-ki18n-devel kf6-kwindowsystem-devel \
+            kf6-kconfig-devel kf6-kcoreaddons-devel kf6-ki18n-devel kf6-kitemmodels-devel kf6-kwindowsystem-devel \
             libplasma-devel plasma-workspace-devel plasma-workspace \
             rpm-build rpmlint dbus-daemon xorg-x11-server-Xvfb xauth file findutils which
 
@@ -356,7 +356,7 @@ jobs:
           qt6-base qt6-declarative
           kconfig kcoreaddons ki18n kwindowsystem
           libplasma plasma-workspace
-          xorg-server-xvfb xauth dbus file namcap
+          xorg-server-xvfb xorg-xauth dbus file namcap
 
       - uses: actions/checkout@v4
         with:
