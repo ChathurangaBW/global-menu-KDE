@@ -2,7 +2,7 @@
 
 Notable changes to the rolling `main` branch are documented here. Global Menu KDE is distributed through its source installer rather than versioned distro packages or GitHub Release assets.
 
-## Current
+## [1.0.1]
 
 ### Added
 

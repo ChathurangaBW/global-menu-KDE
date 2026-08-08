@@ -119,9 +119,14 @@ For dependency details, manual build commands, upgrades, and legacy-cleanup note
 
 ## Distribution model
 
-There is intentionally no `.deb`, `.rpm`, `.pkg.tar.zst`, or architecture-specific GitHub Release requirement. `main` is the install source. Building on the target machine avoids pretending that one Plasma C++ plugin binary is portable across incompatible Qt/KF6/Plasma ABIs.
+Validated GitHub Releases provide native packages for supported distribution families:
 
-This is portable source installation, not universal binary compatibility. A supported machine still needs Plasma 6 and distro-provided development packages.
+- `.deb` for Debian, Ubuntu, and KDE neon systems;
+- `.rpm` for Fedora and compatible RPM systems;
+- `.pkg.tar.zst` plus `PKGBUILD` for Arch Linux and AUR workflows;
+- `.tar.gz` for source builds on other Plasma 6 distributions.
+
+Native packages are architecture- and ABI-specific. Use the package matching both your distribution family and CPU architecture. The source installer remains available when a native package is not suitable.
 
 ## Build
 

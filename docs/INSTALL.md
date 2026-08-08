@@ -1,6 +1,6 @@
 # Installation
 
-Global Menu KDE is a native Plasma 6 binary applet, but it is distributed through a portable **source installer** rather than prebuilt distro packages. Building on the target machine links the plugin against that machine's Qt 6, KF6, Plasma, and LibTaskManager ABI.
+Global Menu KDE is a native Plasma 6 binary applet. Validated releases provide native packages for Debian/Ubuntu (`.deb`), Fedora/RPM (`.rpm`), and Arch (`.pkg.tar.zst`/`PKGBUILD`), plus a source archive and portable source installer. Native packages must match the target distribution family and architecture.
 
 ## Recommended install
 

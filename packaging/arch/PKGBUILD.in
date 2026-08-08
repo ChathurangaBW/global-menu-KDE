@@ -1,0 +1,38 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
+pkgname=global-menu-kde
+pkgver=@VERSION@
+pkgrel=1
+pkgdesc='Native KDE Plasma 6 Global Menu applet with desktop fallback'
+arch=('x86_64')
+url='https://github.com/ChathurangaBW/global-menu-KDE'
+license=('GPL-2.0-or-later')
+options=('!debug')
+depends=(
+  'qt6-base'
+  'qt6-declarative'
+  'kconfig'
+  'ki18n'
+  'kwindowsystem'
+  'libplasma'
+  'plasma-workspace'
+)
+makedepends=('cmake' 'ninja' 'extra-cmake-modules')
+source=("global-menu-kde-${pkgver}.tar.gz")
+sha256sums=('@SOURCE_SHA256@')
+
+build() {
+  cmake -S "$srcdir/global-menu-kde-${pkgver}" -B build -G Ninja \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX=/usr \
+    -DBUILD_TESTING=ON
+  cmake --build build --parallel 2
+}
+
+check() {
+  ctest --test-dir build --output-on-failure
+  ctest --test-dir build -R appmenumodel_test --repeat until-fail:10 --output-on-failure
+}
+
+package() {
+  DESTDIR="$pkgdir" cmake --install build
+}
