@@ -1,4 +1,4 @@
-global-menu-kde (1.0.1) unstable; urgency=medium
+global-menu-kde (1.0.2) unstable; urgency=medium
 
   * Initial stable release: native KDE Plasma 6 Global Menu applet with
     desktop fallback when no application exports a menu.

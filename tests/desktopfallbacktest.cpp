@@ -5,6 +5,7 @@
 
 #include <QAction>
 #include <QMenu>
+#include <QSet>
 #include <QtTest>
 
 class DesktopFallbackTest : public QObject
@@ -14,6 +15,7 @@ class DesktopFallbackTest : public QObject
 private Q_SLOTS:
     void hasExpectedTopLevelMenus();
     void everyTopLevelEntryHasActions();
+    void fileAndGoMenusDoNotDuplicateLocations();
 };
 
 void DesktopFallbackTest::hasExpectedTopLevelMenus()
@@ -49,6 +51,42 @@ void DesktopFallbackTest::everyTopLevelEntryHasActions()
         QVERIFY2(action->menu(), qPrintable(action->text()));
         QVERIFY2(!action->menu()->actions().isEmpty(), qPrintable(action->text()));
     }
+}
+
+void DesktopFallbackTest::fileAndGoMenusDoNotDuplicateLocations()
+{
+    DesktopFallback fallback;
+    QMenu *menu = fallback.menu();
+    QVERIFY(menu);
+
+    QMenu *fileMenu = menu->actions().at(0)->menu();
+    QMenu *goMenu = menu->actions().at(3)->menu();
+    QVERIFY(fileMenu);
+    QVERIFY(goMenu);
+
+    QSet<QString> fileLabels;
+    for (QAction *action : fileMenu->actions()) {
+        if (!action->isSeparator()) {
+            QString text = action->text();
+            text.remove(QLatin1Char('&'));
+            fileLabels.insert(text);
+        }
+    }
+
+    QStringList goLabels;
+    for (QAction *action : goMenu->actions()) {
+        if (!action->isSeparator()) {
+            QString text = action->text();
+            text.remove(QLatin1Char('&'));
+            goLabels << text;
+            QVERIFY2(!fileLabels.contains(text), qPrintable(text));
+        }
+    }
+
+    QCOMPARE(goLabels,
+             QStringList({QStringLiteral("Root Filesystem"),
+                          QStringLiteral("Network"),
+                          QStringLiteral("Recent Locations")}));
 }
 
 QTEST_MAIN(DesktopFallbackTest)

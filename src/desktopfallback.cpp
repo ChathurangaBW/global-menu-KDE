@@ -101,10 +101,11 @@ DesktopFallback::DesktopFallback(QObject *parent)
     });
 
     QMenu *goMenu = m_menu->addMenu(i18n("&Go"));
-    addUrlAction(goMenu, i18n("Home"), QUrl::fromLocalFile(QDir::homePath()));
-    addLocationAction(goMenu, i18n("Documents"), QStandardPaths::DocumentsLocation);
-    addLocationAction(goMenu, i18n("Downloads"), QStandardPaths::DownloadLocation);
-    addUrlAction(goMenu, i18n("Trash"), QUrl(QStringLiteral("trash:/")));
+    // File owns the user's common folders. Keep Go for navigation targets so
+    // the fallback does not present the same locations twice.
+    addUrlAction(goMenu, i18n("Root Filesystem"), QUrl(QStringLiteral("file:///")));
+    addUrlAction(goMenu, i18n("Network"), QUrl(QStringLiteral("network:/")));
+    addUrlAction(goMenu, i18n("Recent Locations"), QUrl(QStringLiteral("recentlyused:/")));
 
     QMenu *toolsMenu = m_menu->addMenu(i18n("&Tools"));
     addProgramAction(toolsMenu, i18n("Run Command…"), QStringLiteral("krunner"));
