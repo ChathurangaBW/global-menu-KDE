@@ -10,6 +10,8 @@
   <img alt="Qt 6" src="https://img.shields.io/badge/Qt-6-41cd52">
   <img alt="C++" src="https://img.shields.io/badge/C%2B%2B-20-00599C">
   <img alt="License" src="https://img.shields.io/badge/license-GPL--2.0--or--later-4c1">
+  <img width="565" height="290" alt="image" src="https://github.com/user-attachments/assets/72faedb9-a368-45aa-b3df-af5f358792b0" />
+
 </p>
 
 <p align="center">
