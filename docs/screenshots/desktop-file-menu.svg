@@ -1,13 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="560" viewBox="0 0 1000 560" role="img" aria-labelledby="title desc">
-  <title id="title">Desktop fallback File menu</title>
-  <desc id="desc">A Plasma panel with the Global Menu KDE fallback headings and the File menu opened to Home Folder, Documents, Downloads and Trash.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="620" viewBox="0 0 1000 620" role="img" aria-labelledby="title desc">
+  <title id="title">Desktop fallback File and Create New menus</title>
+  <desc id="desc">A Plasma panel with the Global Menu KDE fallback headings, the File menu, and its Create New submenu open.</desc>
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0f172a"/><stop offset="1" stop-color="#111827"/></linearGradient>
     <filter id="shadow"><feDropShadow dx="0" dy="12" stdDeviation="15" flood-opacity="0.4"/></filter>
   </defs>
-  <rect width="1000" height="560" rx="24" fill="url(#bg)"/>
+  <rect width="1000" height="620" rx="24" fill="url(#bg)"/>
   <text x="54" y="60" fill="#f8fafc" font-family="Inter, Noto Sans, sans-serif" font-size="28" font-weight="700">Desktop fallback</text>
-  <text x="54" y="90" fill="#9ca9bc" font-family="Inter, Noto Sans, sans-serif" font-size="16">Useful Plasma desktop actions only while no application menu is available.</text>
+  <text x="54" y="90" fill="#9ca9bc" font-family="Inter, Noto Sans, sans-serif" font-size="16">Plasma desktop actions while no application menu is available.</text>
   <g transform="translate(54 125)" filter="url(#shadow)">
     <rect width="892" height="44" rx="10" fill="#242a35" stroke="#3b4452"/>
     <rect x="12" y="5" width="52" height="34" rx="7" fill="#3a4454"/>
@@ -15,23 +15,47 @@
       <text x="23" y="29">File</text><text x="76" y="29">Edit</text><text x="126" y="29">View</text><text x="181" y="29">Go</text><text x="222" y="29">Tools</text><text x="279" y="29">Settings</text><text x="354" y="29">Help</text>
     </g>
     <g transform="translate(12 50)">
-      <rect width="250" height="240" rx="11" fill="#f7f8fb" stroke="#d3d8e0"/>
-      <g font-family="Noto Sans, sans-serif" font-size="16" fill="#1f2937">
-        <text x="48" y="43">Home Folder</text>
-        <text x="48" y="88">Documents</text>
-        <text x="48" y="133">Downloads</text>
-        <line x1="18" y1="157" x2="232" y2="157" stroke="#d1d5db"/>
-        <text x="48" y="202">Trash</text>
+      <rect width="292" height="322" rx="11" fill="#f7f8fb" stroke="#d3d8e0"/>
+      <rect x="8" y="8" width="276" height="42" rx="7" fill="#dbeafe"/>
+      <g font-family="Noto Sans, sans-serif" font-size="15" fill="#1f2937">
+        <text x="46" y="35">Create New</text><text x="266" y="35">›</text>
+        <line x1="16" y1="61" x2="276" y2="61" stroke="#d1d5db"/>
+        <text x="46" y="91">Restart Plasma Shell…</text>
+        <text x="46" y="132">Lock Screen</text>
+        <text x="46" y="173">Show Logout Screen…</text>
+        <line x1="16" y1="193" x2="276" y2="193" stroke="#d1d5db"/>
+        <text x="46" y="227">Open Default Browser</text>
       </g>
       <g fill="none" stroke="#4b5563" stroke-width="2">
-        <path d="M19 34 l13-11 13 11 v13 h-9 v-9 h-8 v9 h-9z"/>
-        <path d="M20 70 h24 v19 h-24z M23 70 v-6 h18 v6"/>
-        <path d="M20 111 h24 v19 h-24z M32 104 v17 M26 115 l6 6 6-6"/>
-        <path d="M23 181 h19 l-2 18 h-15z M20 176 h25 M28 176 v-4 h9 v4"/>
+        <path d="M20 22 h16 v16 h-16z M28 17 v10 M23 22 l5-5 5 5"/>
+        <path d="M19 78 a10 10 0 1 0 6-9 M19 69 v9 h9"/>
+        <rect x="20" y="116" width="16" height="13" rx="3"/><path d="M23 116 v-4 a5 5 0 0 1 10 0 v4"/>
+        <path d="M20 159 h16 v13 h-16z M27 163 l5 3-5 3"/>
+        <circle cx="28" cy="217" r="9"/><path d="M19 217 h18 M28 208 a14 14 0 0 1 0 18 M28 208 a14 14 0 0 0 0 18"/>
+      </g>
+    </g>
+    <g transform="translate(312 58)">
+      <rect width="394" height="300" rx="11" fill="#f7f8fb" stroke="#d3d8e0"/>
+      <g font-family="Noto Sans, sans-serif" font-size="15" fill="#1f2937">
+        <text x="46" y="38">Folder…</text>
+        <text x="46" y="78">Text File…</text>
+        <text x="46" y="118">HTML File…</text>
+        <line x1="16" y1="139" x2="378" y2="139" stroke="#d1d5db"/>
+        <text x="46" y="174">Link to Location (URL)…</text>
+        <text x="46" y="214">Basic Link to File or Directory…</text>
+        <text x="46" y="254">Link to Application…</text>
+      </g>
+      <g fill="none" stroke="#4b5563" stroke-width="2">
+        <path d="M18 25 h11 l4 4 h13 v14 h-28z"/>
+        <path d="M21 64 h20 v18 h-20z M25 69 h12 M25 74 h9"/>
+        <path d="M21 104 h20 v18 h-20z M25 109 h12 M25 114 h12"/>
+        <path d="M21 159 h18 v18 h-18z M25 172 l10-10 M30 162 h5 v5"/>
+        <path d="M20 199 h10 l4 4 h12 v13 h-26z"/>
+        <rect x="20" y="239" width="26" height="17" rx="2"/><circle cx="28" cy="247" r="3"/><path d="M34 253 l5-6 5 6"/>
       </g>
     </g>
   </g>
-  <g transform="translate(54 478)">
+  <g transform="translate(54 576)">
     <circle cx="8" cy="8" r="8" fill="#60a5fa"/>
     <text x="26" y="14" fill="#d7e0ec" font-family="Inter, Noto Sans, sans-serif" font-size="15">The fallback disappears immediately when a real app exports a global menu.</text>
   </g>

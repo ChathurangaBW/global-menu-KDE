@@ -2,6 +2,31 @@
 
 All notable changes to Global Menu KDE are documented here.
 
+## [1.1.0]
+
+### Added
+
+- Reworked the desktop fallback around the requested File, Edit, View, Go, Tools, Settings, and Help actions from issue #14.
+- Added a native-style Create New submenu for folders, text files, HTML files, URL links, file or directory links, and application launchers.
+- Added Plasma session actions for shell restart, screen locking, logout prompting, desktop peeking, Overview, and Activities.
+- Added direct launchers for desktop settings, display settings, common Plasma tools, system settings pages, project help, and the KDE community.
+
+### Changed
+
+- Made Go the single owner of common locations, including Home, Documents, Downloads, Trash, Root Filesystem, Network, and Recent Locations.
+- Disable optional program actions when their executable is not installed.
+- Require confirmation before restarting Plasma Shell.
+
+### Security
+
+- Reject path separators and traversal names when creating desktop items.
+- Refuse to overwrite an existing desktop item.
+
+### Testing
+
+- Added regression coverage for the complete menu hierarchy, duplicate prevention, availability handling, action dispatch, restart confirmation, and safe desktop item creation.
+- Isolated the D-Bus integration test from host desktop service activation for deterministic headless execution.
+
 ## [1.0.2]
 
 ### Fixed

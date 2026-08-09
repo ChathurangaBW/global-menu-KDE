@@ -2,6 +2,15 @@
 
 Production release of the native KDE Plasma 6 Global Menu applet with desktop fallback.
 
+## Highlights
+
+- complete issue #14 fallback menu rework across File, Edit, View, Go, Tools, Settings, and Help;
+- native-style Create New submenu with safe folder, file, URL, filesystem-link, and application-link creation;
+- Plasma lock, logout, shell restart, desktop peek/restore, Overview, and Activities actions;
+- common locations owned exclusively by Go, with no File/Go duplication;
+- optional launchers disabled when their program is not installed;
+- expanded hierarchy, dispatch, availability, confirmation, and path-safety regression tests.
+
 ## Final release gate
 
 The release is published only after all required jobs pass:

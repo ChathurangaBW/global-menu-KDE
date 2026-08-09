@@ -14,7 +14,7 @@
         "Id": "org.chathuranga.globalmenu",
         "License": "GPL-2.0-or-later",
         "Name": "Global Menu KDE",
-        "Version": "1.0.2",
+        "Version": "1.1.0",
         "Website": "https://github.com/ChathurangaBW/global-menu-KDE"
     },
     "X-Plasma-API-Minimum-Version": "6.0"

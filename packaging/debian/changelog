@@ -1,3 +1,12 @@
+global-menu-kde (1.1.0) unstable; urgency=medium
+
+  * Rework the desktop fallback menus for issue #14.
+  * Add safe Create New actions and Plasma session controls.
+  * Keep all common locations exclusively under Go.
+  * Add action-dispatch and desktop-item safety regression coverage.
+
+ -- ChathurangaBW <ChathurangaBW@users.noreply.github.com>  Sun, 09 Aug 2026 19:20:00 +0000
+
 global-menu-kde (1.0.2) unstable; urgency=medium
 
   * Initial stable release: native KDE Plasma 6 Global Menu applet with

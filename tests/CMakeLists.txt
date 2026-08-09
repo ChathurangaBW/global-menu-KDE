@@ -46,7 +46,9 @@ target_link_libraries(appmenumodel_test PRIVATE
 )
 
 add_test(NAME appmenumodel_test
-    COMMAND dbus-run-session -- $<TARGET_FILE:appmenumodel_test>
+    COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/run-dbus-test.sh
+            ${CMAKE_CURRENT_SOURCE_DIR}/dbus-test.conf
+            $<TARGET_FILE:appmenumodel_test>
 )
 set_tests_properties(appmenumodel_test PROPERTIES
     ENVIRONMENT "QT_QPA_PLATFORM=offscreen"

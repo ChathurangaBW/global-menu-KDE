@@ -38,20 +38,24 @@ This project does **not** create a second panel, an Apple-style system bar, a cl
 ## Desktop fallback preview
 
 <p align="center">
-  <img src="docs/screenshots/desktop-file-menu.svg" alt="Desktop fallback File menu with Home Folder, Documents, Downloads and Trash" width="82%">
+  <img src="docs/screenshots/desktop-file-menu.svg" alt="Desktop fallback File menu and Create New submenu" width="82%">
 </p>
 
 The desktop fallback contains useful Plasma actions only while no compatible application menu is available:
 
 | Menu | Desktop actions |
 | --- | --- |
-| **File** | Home Folder, Documents, Downloads, Trash |
-| **Edit** | Clipboard History |
-| **View** | Show Desktop, Restore Windows |
-| **Go** | Home, Documents, Downloads, Trash |
-| **Tools** | Run Command, Konsole, System Monitor |
-| **Settings** | System Settings |
-| **Help** | KDE Help Center |
+| **File** | Create New, Restart Plasma Shell, Lock Screen, logout prompt, default browser |
+| **Edit** | Clipboard History, Desktop and Wallpaper, Display Configuration |
+| **View** | Peek at Desktop, Restore Windows, Overview, Activities |
+| **Go** | Home, Documents, Downloads, Trash, Root Filesystem, Network, Recent Locations |
+| **Tools** | Find Files, Run Command, Terminal, System Monitor, disk usage, Partition Manager |
+| **Settings** | System Settings, Power Management, Date and Time, Region and Language, Bluetooth |
+| **Help** | KDE Help Center, project documentation and issues, KDE community |
+
+Create New safely supports folders, text files, HTML files, URL links, links to existing files or directories, and application launchers. Optional tools are disabled when their executable is not installed. Plasma Shell restart always asks for confirmation.
+
+Desktop Undo, desktop icon arrangement, and desktop Edit Mode are intentionally not exposed because Plasma 6 does not provide stable public interfaces for those desktop-containment actions from a panel applet.
 
 As soon as a real application menu appears, this fallback is removed from the presentation and KDE's normal dbusmenu-backed application menu is shown instead.
 

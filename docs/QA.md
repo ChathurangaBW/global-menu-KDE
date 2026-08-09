@@ -17,8 +17,9 @@ A build is not considered correct unless all of these states work:
 The repository CI covers:
 
 - construction of the desktop fallback model;
-- fallback menu headings and action structure;
-- fallback → application menu → fallback transition over D-Bus;
+- the complete issue #14 menu hierarchy and single-owner Go locations;
+- executable availability, action dispatch, restart confirmation, and safe desktop item creation;
+- fallback → application menu → fallback transition over an isolated D-Bus session;
 - KDE dbusmenu importer interaction;
 - direct actions and submenus from a fake exporter;
 - repeated application-menu lifecycle runs;
@@ -73,3 +74,4 @@ For a useful bug report, include:
 - the active application involved;
 - terminal output from `install.sh` if relevant;
 - a screenshot or short screen recording for layout/interaction problems.
+r short screen recording for layout/interaction problems.
