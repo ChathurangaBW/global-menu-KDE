@@ -1,4 +1,4 @@
-# Global Menu KDE
+# KDE Global Menu 
 
 <p align="center">
   <strong>KDE Plasma's native Global Menu applet, with the missing desktop menu state added.</strong>
