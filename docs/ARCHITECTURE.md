@@ -1,6 +1,6 @@
 # Architecture
 
-Global Menu KDE is intentionally built as a small extension of KDE Plasma's native Global Menu applet architecture rather than as a custom panel/menu shell.
+KDE Global Menu is intentionally built as a small extension of KDE Plasma's native Global Menu applet architecture rather than as a custom panel/menu shell.
 
 ## Design objective
 

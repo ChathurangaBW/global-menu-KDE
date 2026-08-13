@@ -1,6 +1,6 @@
 # Installation
 
-Global Menu KDE is a native Plasma 6 binary applet. Validated releases provide native packages for Debian/Ubuntu (`.deb`), Fedora/RPM (`.rpm`), and Arch (`.pkg.tar.zst`/`PKGBUILD`), plus a source archive and portable source installer. Native packages must match the target distribution family and architecture.
+KDE Global Menu is a native Plasma 6 binary applet. Validated releases provide native packages for Debian/Ubuntu (`.deb`), Fedora/RPM (`.rpm`), and Arch (`.pkg.tar.zst`/`PKGBUILD`), plus a source archive and portable source installer. Native packages must match the target distribution family and architecture.
 
 ## Recommended install
 
@@ -32,7 +32,7 @@ The installer:
 
 The installer never creates or exports a `QT_PLUGIN_PATH` session override.
 
-After the first binary-plugin installation, log out of Plasma and back in once. Then open **Edit Mode → Add Widgets**, search for **Global Menu KDE**, and drag it directly into the existing panel.
+After the first binary-plugin installation, log out of Plasma and back in once. Then open **Edit Mode → Add Widgets**, search for **KDE Global Menu**, and drag it directly into the existing panel.
 
 ## Other distributions
 

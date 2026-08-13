@@ -35,7 +35,7 @@ for command_name in cmake ninja ctest ldd; do
     command -v "$command_name" >/dev/null 2>&1 || fail "required command not found: $command_name"
 done
 
-printf 'Configuring Global Menu KDE for native system installation...\n'
+printf 'Configuring KDE Global Menu for native system installation...\n'
 cmake -S "$ROOT_DIR" -B "$BUILD_DIR" -G Ninja \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_INSTALL_PREFIX=/usr \
@@ -86,7 +86,7 @@ fi
 
 cat <<MSG
 
-Global Menu KDE installed successfully.
+KDE Global Menu installed successfully.
 
 Native plugin:
   $PLUGIN_FILE
@@ -94,7 +94,7 @@ Native plugin:
 No QT_PLUGIN_PATH override is used.
 
 Log out and log back in once. Then open Edit Mode -> Add Widgets and drag
-"Global Menu KDE" directly into the existing panel, like KDE's native Global
+"KDE Global Menu" directly into the existing panel, like KDE's native Global
 Menu widget.
 
 Uninstall later with:

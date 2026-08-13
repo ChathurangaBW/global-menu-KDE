@@ -558,11 +558,11 @@ DesktopFallback::DesktopFallback(DesktopFallbackActionRunner *runner, const QStr
     addProgramAction(helpMenu, i18n("KDE Help Center"), QStringLiteral("khelpcenter"), {}, QStringLiteral("help-contents"));
     helpMenu->addSeparator();
     addUrlAction(helpMenu,
-                 i18n("Global Menu KDE Documentation"),
+                 i18n("KDE Global Menu Documentation"),
                  QUrl(QStringLiteral("https://github.com/ChathurangaBW/global-menu-KDE#readme")),
                  QStringLiteral("documentation"));
     addUrlAction(helpMenu,
-                 i18n("Global Menu KDE Issues"),
+                 i18n("KDE Global Menu Issues"),
                  QUrl(QStringLiteral("https://github.com/ChathurangaBW/global-menu-KDE/issues")),
                  QStringLiteral("tools-report-bug"));
     addUrlAction(helpMenu,

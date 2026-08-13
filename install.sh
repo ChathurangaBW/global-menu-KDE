@@ -11,7 +11,7 @@ TEMP_DIR=""
 
 usage() {
     cat <<'EOF'
-Global Menu KDE portable Plasma 6 source installer
+KDE Global Menu portable Plasma 6 source installer
 
 Usage:
   bash ./install.sh [options]
@@ -187,9 +187,9 @@ bash "${SOURCE_DIR}/scripts/install-system.sh"
 
 cat <<'EOF'
 
-Global Menu KDE installed successfully.
+KDE Global Menu installed successfully.
 Log out of Plasma and back in once, then:
-  Edit Mode -> Add Widgets -> Global Menu KDE
+  Edit Mode -> Add Widgets -> KDE Global Menu
 
 Uninstall later with:
   global-menu-kde-uninstall

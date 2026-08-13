@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to Global Menu KDE are documented here.
+All notable changes to KDE Global Menu are documented here.
 
 ## [1.1.1]
 

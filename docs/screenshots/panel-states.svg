@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
-  <title id="title">Global Menu KDE panel behavior</title>
+  <title id="title">KDE Global Menu panel behavior</title>
   <desc id="desc">Three Plasma panel states: desktop fallback menu, Dolphin application menu takeover, and desktop fallback restored after Dolphin closes.</desc>
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
@@ -16,7 +16,7 @@
   </defs>
 
   <rect width="1280" height="720" rx="28" fill="url(#bg)"/>
-  <text x="64" y="72" fill="#f8fafc" font-family="Inter, Noto Sans, sans-serif" font-size="34" font-weight="700">Global Menu KDE</text>
+  <text x="64" y="72" fill="#f8fafc" font-family="Inter, Noto Sans, sans-serif" font-size="34" font-weight="700">KDE Global Menu</text>
   <text x="64" y="108" fill="#9aa7bd" font-family="Inter, Noto Sans, sans-serif" font-size="18">One native Plasma panel · desktop fallback only when no application menu is exported</text>
 
   <!-- State 1 -->

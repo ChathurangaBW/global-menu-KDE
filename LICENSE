@@ -1,4 +1,4 @@
-Global Menu KDE contains code under multiple compatible free-software licenses.
+KDE Global Menu contains code under multiple compatible free-software licenses.
 
 Project-specific additions, including the desktop fallback menu, use:
 - SPDX-License-Identifier: GPL-2.0-or-later

@@ -67,7 +67,7 @@ if [[ "$release_exists" == true ]]; then
     echo "Updating existing release $tag on tested commit $GITHUB_SHA"
     gh release edit "$tag" \
         --repo "$GITHUB_REPOSITORY" \
-        --title "Global Menu KDE ${version}" \
+        --title "KDE Global Menu ${version}" \
         --notes-file "$notes_file"
     gh release upload "$tag" --repo "$GITHUB_REPOSITORY" --clobber "${assets[@]}"
 else
@@ -75,7 +75,7 @@ else
     gh release create "$tag" \
         --repo "$GITHUB_REPOSITORY" \
         --target "$GITHUB_SHA" \
-        --title "Global Menu KDE ${version}" \
+        --title "KDE Global Menu ${version}" \
         --notes-file "$notes_file" \
         "${assets[@]}"
 fi

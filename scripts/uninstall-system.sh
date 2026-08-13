@@ -77,7 +77,7 @@ if [[ -f "$SYSTEM_UNINSTALLER" ]]; then
 fi
 
 if [[ $removed -eq 0 ]]; then
-    echo "Global Menu KDE plugin was not found; nothing needed removal."
+    echo "KDE Global Menu plugin was not found; nothing needed removal."
 else
-    echo "Global Menu KDE removed. Log out and back in to refresh Plasma completely."
+    echo "KDE Global Menu removed. Log out and back in to refresh Plasma completely."
 fi

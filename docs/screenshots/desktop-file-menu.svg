@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1000" height="620" viewBox="0 0 1000 620" role="img" aria-labelledby="title desc">
   <title id="title">Desktop fallback File and Create New menus</title>
-  <desc id="desc">A Plasma panel with the Global Menu KDE fallback headings, the File menu, and its Create New submenu open.</desc>
+  <desc id="desc">A Plasma panel with the KDE Global Menu fallback headings, the File menu, and its Create New submenu open.</desc>
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0f172a"/><stop offset="1" stop-color="#111827"/></linearGradient>
     <filter id="shadow"><feDropShadow dx="0" dy="12" stdDeviation="15" flood-opacity="0.4"/></filter>

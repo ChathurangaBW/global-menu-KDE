@@ -1,6 +1,6 @@
 # QA validation
 
-Global Menu KDE uses a release gate for native Debian, RPM, and Arch packages, plus a source-install path. The important contract is that the exact repository state builds, tests, installs, is discovered by Plasma without plugin-path hacks, and can be removed cleanly.
+KDE Global Menu uses a release gate for native Debian, RPM, and Arch packages, plus a source-install path. The important contract is that the exact repository state builds, tests, installs, is discovered by Plasma without plugin-path hacks, and can be removed cleanly.
 
 ## Functional contract
 

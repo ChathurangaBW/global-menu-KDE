@@ -207,8 +207,8 @@ void DesktopFallbackTest::menuContractMatchesIssue14()
                           QStringLiteral("Bluetooth…")}));
     QCOMPARE(labels(findMenu(menu, QStringLiteral("Help"))),
              QStringList({QStringLiteral("KDE Help Center"),
-                          QStringLiteral("Global Menu KDE Documentation"),
-                          QStringLiteral("Global Menu KDE Issues"),
+                          QStringLiteral("KDE Global Menu Documentation"),
+                          QStringLiteral("KDE Global Menu Issues"),
                           QStringLiteral("KDE Community")}));
 }
 
@@ -261,7 +261,7 @@ void DesktopFallbackTest::dispatchesProgramsUrlsAndSessionBusCalls()
     QCOMPARE(runner.programCalls.at(1).program, QStringLiteral("krunner"));
     QVERIFY(runner.programCalls.at(1).arguments.isEmpty());
 
-    findAction(fallback.menu(), QStringLiteral("Global Menu KDE Issues"))->trigger();
+    findAction(fallback.menu(), QStringLiteral("KDE Global Menu Issues"))->trigger();
     findAction(fallback.menu(), QStringLiteral("Network"))->trigger();
     QCOMPARE(runner.openedUrls,
              QList<QUrl>({QUrl(QStringLiteral("https://github.com/ChathurangaBW/global-menu-KDE/issues")),
