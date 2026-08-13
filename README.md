@@ -13,12 +13,29 @@
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/panel-states.svg" alt="KDE Global Menu switching between the desktop fallback and a Dolphin application menu" width="100%">
+  <a href="https://github.com/ChathurangaBW/global-menu-KDE/blob/main/docs/screenshots/full-desktop.png">
+    <img src="docs/screenshots/full-desktop.png" alt="KDE Plasma desktop with the KDE Global Menu fallback open" width="100%">
+  </a>
+</p>
+
+<p align="center">
+  <em>Click the screenshot to open the full-size image.</em>
 </p>
 
 > **One panel. Native KDE behavior. One useful fallback.**
 >
 > When the active application exports a menu, KDE Global Menu shows its real application menu. When no compatible menu is available, the applet automatically switches to a practical desktop menu.
+
+## Quick navigation
+
+- [Overview](#overview)
+- [Screenshots](#screenshots)
+- [Desktop fallback](#desktop-fallback)
+- [Installation](#installation)
+- [Architecture](#architecture)
+- [Build from source](#build-from-source)
+- [Quality assurance](#quality-assurance)
+- [Documentation](#documentation)
 
 ## Overview
 
@@ -34,16 +51,24 @@ The project does **not** create a second panel, Apple-style system bar, clock, s
 
 ## Screenshots
 
-### Full Plasma desktop
+The full desktop preview is shown at the top of this page. The interactive panel-state diagram below shows how KDE Global Menu switches between a real application menu and the desktop fallback.
+
+### Panel states
 
 <p align="center">
-  <img src="docs/screenshots/full-desktop.png" alt="KDE Plasma desktop with KDE Global Menu in the panel" width="100%">
+  <a href="https://github.com/ChathurangaBW/global-menu-KDE/blob/main/docs/screenshots/panel-states.svg">
+    <img src="docs/screenshots/panel-states.svg" alt="KDE Global Menu switching between the desktop fallback and a Dolphin application menu" width="100%">
+  </a>
 </p>
+
+<p align="center"><em>Click the diagram to open the original SVG.</em></p>
 
 ### Desktop File menu
 
 <p align="center">
-  <img src="docs/screenshots/desktop-file-menu.svg" alt="KDE Global Menu desktop File menu and Create New submenu" width="82%">
+  <a href="https://github.com/ChathurangaBW/global-menu-KDE/blob/main/docs/screenshots/desktop-file-menu.svg">
+    <img src="docs/screenshots/desktop-file-menu.svg" alt="KDE Global Menu desktop File menu and Create New submenu" width="82%">
+  </a>
 </p>
 
 ## Desktop fallback
