@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 cmake_minimum_required(VERSION 3.22)
 
-project(global-menu-kde VERSION 1.1.0 LANGUAGES CXX)
+project(global-menu-kde VERSION 1.1.1 LANGUAGES CXX)
 
 set(QT_MIN_VERSION "6.6.0")
 set(KF6_MIN_VERSION "6.0.0")

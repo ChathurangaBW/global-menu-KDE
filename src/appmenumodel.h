@@ -85,6 +85,7 @@ private:
     void connectApplicationActions();
     void removeSearchActionsFromMenu();
     void insertSearchActionsIntoMenu(const QString &filter = QString());
+    void updateFallbackWindowActions();
 
     bool m_menuAvailable = false;
     bool m_allScreens = true;

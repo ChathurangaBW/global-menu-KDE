@@ -88,6 +88,28 @@ public:
         }
     }
 
+    bool restartShellAvailable() const override
+    {
+        const QString systemctl = QStandardPaths::findExecutable(QStringLiteral("systemctl"));
+        if (!systemctl.isEmpty() && QProcess::execute(systemctl, {QStringLiteral("--user"), QStringLiteral("cat"), QStringLiteral("plasma-plasmashell.service")}) == 0) {
+            return true;
+        }
+        return programAvailable(QStringLiteral("plasmashell"));
+    }
+
+    void restartShell() override
+    {
+        const QString systemctl = QStandardPaths::findExecutable(QStringLiteral("systemctl"));
+        if (!systemctl.isEmpty() && QProcess::execute(systemctl, {QStringLiteral("--user"), QStringLiteral("cat"), QStringLiteral("plasma-plasmashell.service")}) == 0) {
+            QProcess::startDetached(systemctl, {QStringLiteral("--user"), QStringLiteral("restart"), QStringLiteral("plasma-plasmashell.service")});
+            return;
+        }
+        const QString plasmashell = QStandardPaths::findExecutable(QStringLiteral("plasmashell"));
+        if (!plasmashell.isEmpty()) {
+            QProcess::startDetached(plasmashell, {QStringLiteral("--replace")});
+        }
+    }
+
     void callSessionBus(const QString &service,
                         const QString &path,
                         const QString &interface,
@@ -395,13 +417,28 @@ DesktopFallback::DesktopFallback(DesktopFallbackActionRunner *runner, const QStr
 
     fileMenu->addSeparator();
     QAction *restartAction = addAction(fileMenu, i18n("Restart Plasma Shell…"), QStringLiteral("system-reboot"));
-    restartAction->setEnabled(m_runner->programAvailable(QStringLiteral("plasmashell")));
+    restartAction->setEnabled(m_runner->restartShellAvailable());
     QObject::connect(restartAction, &QAction::triggered, restartAction, [this] {
         if (m_runner->confirm(m_menu.get(),
                               i18n("Restart Plasma Shell"),
                               i18n("Restart Plasma Shell now? Panels and desktop widgets will briefly disappear."))) {
-            m_runner->startProgram(QStringLiteral("plasmashell"), {QStringLiteral("--replace")});
+            m_runner->restartShell();
         }
+    });
+    m_closeWindowAction = addAction(fileMenu, i18n("Close Window"), QStringLiteral("window-close"));
+    QObject::connect(m_closeWindowAction, &QAction::triggered, m_closeWindowAction, [this] {
+        if (m_closeWindow) {
+            m_closeWindow();
+        }
+    });
+    m_forceQuitWindowAction = addAction(fileMenu, i18n("Force Quit Window…"), QStringLiteral("window-close"));
+    QObject::connect(m_forceQuitWindowAction, &QAction::triggered, m_forceQuitWindowAction, [this] {
+        if (!m_forceQuitWindow || !m_runner->confirm(m_menu.get(),
+                                                     i18n("Force Quit Window"),
+                                                     i18n("This will force the selected window to close. Continue?"))) {
+            return;
+        }
+        m_forceQuitWindow();
     });
     addBusAction(fileMenu,
                  i18n("Lock Screen"),
@@ -535,6 +572,21 @@ DesktopFallback::DesktopFallback(DesktopFallbackActionRunner *runner, const QStr
 }
 
 DesktopFallback::~DesktopFallback() = default;
+
+void DesktopFallback::setActiveWindowActions(bool canClose,
+                                              std::function<void()> closeWindow,
+                                              bool canForceQuit,
+                                              std::function<void()> forceQuitWindow)
+{
+    m_closeWindow = std::move(closeWindow);
+    m_forceQuitWindow = std::move(forceQuitWindow);
+    if (m_closeWindowAction) {
+        m_closeWindowAction->setEnabled(canClose);
+    }
+    if (m_forceQuitWindowAction) {
+        m_forceQuitWindowAction->setEnabled(canForceQuit);
+    }
+}
 
 QMenu *DesktopFallback::menu() const
 {

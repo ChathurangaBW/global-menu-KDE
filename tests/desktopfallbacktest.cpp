@@ -82,6 +82,16 @@ public:
         programCalls.push_back({program, arguments});
     }
 
+    bool restartShellAvailable() const override
+    {
+        return restartAvailable;
+    }
+
+    void restartShell() override
+    {
+        ++restartCalls;
+    }
+
     void callSessionBus(const QString &service,
                         const QString &path,
                         const QString &interface,
@@ -113,6 +123,8 @@ public:
     QList<DesktopCreateKind> createKinds;
     QStringList createDirectories;
     bool confirmationResult = true;
+    bool restartAvailable = false;
+    int restartCalls = 0;
 };
 }
 
@@ -126,6 +138,7 @@ private Q_SLOTS:
     void unavailableProgramsAreDisabled();
     void dispatchesProgramsUrlsAndSessionBusCalls();
     void restartRequiresConfirmation();
+    void activeWindowActionsDispatchSafely();
     void createNewDispatchesSafeKinds();
     void validatesDesktopItemNames();
     void createsEmptyDesktopItemsSafely();
@@ -157,6 +170,8 @@ void DesktopFallbackTest::menuContractMatchesIssue14()
     QCOMPARE(labels(findMenu(menu, QStringLiteral("File"))),
              QStringList({QStringLiteral("Create New"),
                           QStringLiteral("Restart Plasma Shell…"),
+                          QStringLiteral("Close Window"),
+                          QStringLiteral("Force Quit Window…"),
                           QStringLiteral("Lock Screen"),
                           QStringLiteral("Show Logout Screen…"),
                           QStringLiteral("Open Default Browser")}));
@@ -273,7 +288,7 @@ void DesktopFallbackTest::dispatchesProgramsUrlsAndSessionBusCalls()
 void DesktopFallbackTest::restartRequiresConfirmation()
 {
     FakeRunner runner;
-    runner.availablePrograms.insert(QStringLiteral("plasmashell"));
+    runner.restartAvailable = true;
     DesktopFallback fallback(&runner, QStringLiteral("/desktop"));
 
     runner.confirmationResult = false;
@@ -284,9 +299,41 @@ void DesktopFallbackTest::restartRequiresConfirmation()
     runner.confirmationResult = true;
     findAction(fallback.menu(), QStringLiteral("Restart Plasma Shell…"))->trigger();
     QCOMPARE(runner.confirmationTitles.size(), 2);
-    QCOMPARE(runner.programCalls.size(), 1);
-    QCOMPARE(runner.programCalls.constFirst().program, QStringLiteral("plasmashell"));
-    QCOMPARE(runner.programCalls.constFirst().arguments, QStringList({QStringLiteral("--replace")}));
+    QCOMPARE(runner.restartCalls, 1);
+}
+
+void DesktopFallbackTest::activeWindowActionsDispatchSafely()
+{
+    FakeRunner runner;
+    DesktopFallback fallback(&runner, QStringLiteral("/desktop"));
+    bool closeRequested = false;
+    bool forceQuitRequested = false;
+
+    fallback.setActiveWindowActions(true,
+                                    [&closeRequested] { closeRequested = true; },
+                                    true,
+                                    [&forceQuitRequested] { forceQuitRequested = true; });
+
+    QAction *closeAction = findAction(fallback.menu(), QStringLiteral("Close Window"));
+    QAction *forceQuitAction = findAction(fallback.menu(), QStringLiteral("Force Quit Window…"));
+    QVERIFY(closeAction);
+    QVERIFY(forceQuitAction);
+    QVERIFY(closeAction->isEnabled());
+    QVERIFY(forceQuitAction->isEnabled());
+
+    closeAction->trigger();
+    QVERIFY(closeRequested);
+
+    runner.confirmationResult = false;
+    forceQuitAction->trigger();
+    QVERIFY(!forceQuitRequested);
+    runner.confirmationResult = true;
+    forceQuitAction->trigger();
+    QVERIFY(forceQuitRequested);
+
+    fallback.setActiveWindowActions(false, {}, false, {});
+    QVERIFY(!closeAction->isEnabled());
+    QVERIFY(!forceQuitAction->isEnabled());
 }
 
 void DesktopFallbackTest::createNewDispatchesSafeKinds()

@@ -1,4 +1,4 @@
-global-menu-kde (1.1.0) unstable; urgency=medium
+global-menu-kde (1.1.1) unstable; urgency=medium
 
   * Rework the desktop fallback menus for issue #14.
   * Add safe Create New actions and Plasma session controls.

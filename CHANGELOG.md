@@ -2,6 +2,20 @@
 
 All notable changes to Global Menu KDE are documented here.
 
+## [1.1.1]
+
+### Fixed
+
+- Restart Plasma Shell through the managed user service when available, avoiding a kill-first shell restart that can leave an empty desktop.
+- Added Close Window for unsupported applications through LibTaskManager's supported active-task API.
+- Added confirmed Force Quit Window using KWin's interactive kill-window action.
+- Disable window actions when no active window or supported operation is available.
+
+### Testing
+
+- Added restart-action and active-window action regression coverage.
+- Added live X11+D-Bus Plasma loader validation for the updated plugin.
+
 ## [1.1.0]
 
 ### Added
