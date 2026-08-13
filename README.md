@@ -37,7 +37,7 @@ The project does **not** create a second panel, Apple-style system bar, clock, s
 ### Full Plasma desktop
 
 <p align="center">
-  <img src="docs/screenshots/Screenshot_20260807_234220.png" alt="KDE Plasma desktop with KDE Global Menu in the panel" width="100%">
+  <img src="docs/screenshots/full-desktop.png" alt="KDE Plasma desktop with KDE Global Menu in the panel" width="100%">
 </p>
 
 ### Desktop File menu
