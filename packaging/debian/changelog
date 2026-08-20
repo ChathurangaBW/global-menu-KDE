@@ -1,3 +1,11 @@
+global-menu-kde (1.1.2) unstable; urgency=medium
+
+  * Install KDE translation catalogs for the desktop fallback and Wayland search.
+  * Follow the user's existing locale without a separate language setting.
+  * Add initial French translations and catalog regression coverage.
+
+ -- ChathurangaBW <ChathurangaBW@users.noreply.github.com>  Thu, 20 Aug 2026 18:00:00 +0000
+
 global-menu-kde (1.1.1) unstable; urgency=medium
 
   * Rework the desktop fallback menus for issue #14.

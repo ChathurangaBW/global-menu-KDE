@@ -54,3 +54,8 @@ set_tests_properties(appmenumodel_test PROPERTIES
     ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
     TIMEOUT 30
 )
+
+add_test(NAME translation_catalog_test
+    COMMAND ${GETTEXT_MSGFMT_EXECUTABLE} --check
+            ${CMAKE_SOURCE_DIR}/po/fr/plasma_applet_org.chathuranga.globalmenu.po
+)

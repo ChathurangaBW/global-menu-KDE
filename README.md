@@ -93,6 +93,7 @@ Important behavior:
 - **Force Quit Window…** asks for confirmation before starting KWin's force-close action.
 - Optional actions are disabled when their required executable or active-window capability is unavailable.
 - As soon as a real application menu appears, KDE's normal dbusmenu-backed application menu replaces the fallback.
+- Translations follow the user's existing desktop locale automatically through KDE's normal locale settings. There is no separate language selector to configure.
 
 Desktop Undo, desktop icon arrangement, and desktop Edit Mode are intentionally not exposed because Plasma 6 does not provide stable public interfaces for those desktop-containment actions from a panel applet.
 
@@ -136,6 +137,8 @@ Validated [GitHub Releases](https://github.com/ChathurangaBW/global-menu-KDE/rel
 - `.tar.gz` for source builds on other Plasma 6 distributions
 
 Native packages are architecture- and ABI-specific. Select the package matching both your distribution family and CPU architecture. On rolling, unstable, or otherwise ABI-mismatched Plasma installations, use the source installer so the plugin is compiled against your installed Plasma libraries.
+
+The fallback and Wayland menu search use the current `LANG`, `LC_MESSAGES`, and KDE locale configuration. Translation catalogs are installed with the applet; when a catalog is unavailable, KDE safely falls back to English.
 
 For dependency details, manual installation, upgrades, and legacy cleanup, see **[docs/INSTALL.md](docs/INSTALL.md)**.
 

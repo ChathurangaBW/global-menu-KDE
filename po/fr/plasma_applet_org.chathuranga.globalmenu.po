@@ -1,0 +1,156 @@
+# KDE Global Menu French translation.
+# SPDX-License-Identifier: GPL-2.0-or-later
+msgid ""
+msgstr ""
+"Project-Id-Version: KDE Global Menu\n"
+"PO-Revision-Date: 2026-08-20 23:30+0530\n"
+"Last-Translator: KDE Global Menu contributors\n"
+"Language-Team: French\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "&File"
+msgstr "&Fichier"
+
+msgid "&Edit"
+msgstr "&Édition"
+
+msgid "&View"
+msgstr "&Affichage"
+
+msgid "&Go"
+msgstr "A&ller"
+
+msgid "&Tools"
+msgstr "Ou&tils"
+
+msgid "&Settings"
+msgstr "&Configuration"
+
+msgid "&Help"
+msgstr "&Aide"
+
+msgid "Create New"
+msgstr "Créer"
+
+msgid "Folder…"
+msgstr "Dossier…"
+
+msgid "Text File…"
+msgstr "Fichier texte…"
+
+msgid "HTML File…"
+msgstr "Fichier HTML…"
+
+msgid "Link to Location (URL)…"
+msgstr "Lien vers un emplacement (URL)…"
+
+msgid "Basic Link to File or Directory…"
+msgstr "Lien vers un fichier ou un dossier…"
+
+msgid "Link to Application…"
+msgstr "Lien vers une application…"
+
+msgid "Restart Plasma Shell…"
+msgstr "Redémarrer Plasma Shell…"
+
+msgid "Close Window"
+msgstr "Fermer la fenêtre"
+
+msgid "Force Quit Window…"
+msgstr "Forcer la fermeture de la fenêtre…"
+
+msgid "Lock Screen"
+msgstr "Verrouiller l’écran"
+
+msgid "Show Logout Screen…"
+msgstr "Afficher l’écran de déconnexion…"
+
+msgid "Open Default Browser"
+msgstr "Ouvrir le navigateur par défaut"
+
+msgid "Clipboard History"
+msgstr "Historique du presse-papiers"
+
+msgid "Desktop and Wallpaper…"
+msgstr "Bureau et fond d’écran…"
+
+msgid "Display Configuration…"
+msgstr "Configuration de l’affichage…"
+
+msgid "Peek at Desktop"
+msgstr "Aperçu du bureau"
+
+msgid "Restore Windows"
+msgstr "Restaurer les fenêtres"
+
+msgid "Overview"
+msgstr "Vue d’ensemble"
+
+msgid "Activities"
+msgstr "Activités"
+
+msgid "Home Folder"
+msgstr "Dossier personnel"
+
+msgid "Documents"
+msgstr "Documents"
+
+msgid "Downloads"
+msgstr "Téléchargements"
+
+msgid "Trash"
+msgstr "Corbeille"
+
+msgid "Root Filesystem"
+msgstr "Système de fichiers racine"
+
+msgid "Network"
+msgstr "Réseau"
+
+msgid "Recent Locations"
+msgstr "Emplacements récents"
+
+msgid "Find Files"
+msgstr "Rechercher des fichiers"
+
+msgid "Run Command"
+msgstr "Exécuter une commande"
+
+msgid "Open Terminal"
+msgstr "Ouvrir un terminal"
+
+msgid "System Monitor"
+msgstr "Moniteur système"
+
+msgid "Disk Usage"
+msgstr "Utilisation des disques"
+
+msgid "Partition Manager"
+msgstr "Gestionnaire de partitions"
+
+msgid "System Settings"
+msgstr "Configuration du système"
+
+msgid "Power Management"
+msgstr "Gestion de l’énergie"
+
+msgid "Date and Time"
+msgstr "Date et heure"
+
+msgid "Region and Language"
+msgstr "Région et langue"
+
+msgid "Bluetooth"
+msgstr "Bluetooth"
+
+msgid "KDE Help Center"
+msgstr "Centre d’aide KDE"
+
+msgid "Search"
+msgstr "Rechercher"
+
+msgid "Search…"
+msgstr "Rechercher…"

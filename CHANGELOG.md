@@ -2,6 +2,30 @@
 
 All notable changes to KDE Global Menu are documented here.
 
+## [Unreleased]
+
+### Fixed
+
+- Add KDE translation catalog installation for the desktop fallback and Wayland menu search.
+- Use the user's existing locale automatically without adding a separate language setting.
+- Add initial French translations for the fallback menus and search labels.
+
+### Testing
+
+- Validate catalog syntax and installation through CTest and a live Plasma smoke test.
+
+## [1.1.2]
+
+### Fixed
+
+- Install KDE translation catalogs for the desktop fallback and Wayland menu search.
+- Follow the user's existing locale automatically without a separate language setting.
+- Add initial French translations for the fallback menus and search labels.
+
+### Testing
+
+- Add translation catalog syntax and installation regression coverage.
+
 ## [1.1.1]
 
 ### Fixed
