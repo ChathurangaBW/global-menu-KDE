@@ -423,7 +423,10 @@ jobs:
           set -euo pipefail
           pacman -U --noconfirm dist/*.pkg.tar.zst
           pacman -Q global-menu-kde
-          pacman -Qql global-menu-kde | grep -Fxq '/usr/share/doc/global-menu-kde/CHANGELOG.md'
+          pacman -Qk global-menu-kde
+          pacman -Qql global-menu-kde | sed 's#^/##' > /tmp/arch-package-files.txt
+          grep -Fx 'usr/share/doc/global-menu-kde/CHANGELOG.md' /tmp/arch-package-files.txt
+          grep -Fx 'usr/share/locale/fr/LC_MESSAGES/plasma_applet_org.chathuranga.globalmenu.mo' /tmp/arch-package-files.txt
           plugin=$(find /usr -type f -name 'org.chathuranga.globalmenu.so' -print -quit)
           test -n "$plugin"
           set +e
@@ -433,7 +436,9 @@ jobs:
           test -s /tmp/arch-ldd.txt
           ! grep -q 'not found' /tmp/arch-ldd.txt
           test "$ldd_status" -eq 0
-          test -s /usr/share/locale/fr/LC_MESSAGES/plasma_applet_org.chathuranga.globalmenu.mo
+          catalog=/usr/share/locale/fr/LC_MESSAGES/plasma_applet_org.chathuranga.globalmenu.mo
+          stat "$catalog"
+          test -s "$catalog"
 
       - name: Native Arch discovery smoke with no QT_PLUGIN_PATH
         shell: bash
