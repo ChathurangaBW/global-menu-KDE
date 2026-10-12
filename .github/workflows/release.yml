@@ -421,7 +421,15 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          pacman -U --noconfirm dist/*.pkg.tar.zst
+          package=$(printf '%s\n' dist/*.pkg.tar.zst)
+          bsdtar -tf "$package" | sed 's#^/##' > /tmp/arch-archive-files.txt
+          grep -Fx 'usr/share/locale/fr/LC_MESSAGES/plasma_applet_org.chathuranga.globalmenu.mo' /tmp/arch-archive-files.txt
+          # The minimal Arch CI image excludes non-English locales through
+          # pacman NoExtract. Explicitly allow this package's tested catalog.
+          if grep -Eq '^[[:space:]]*NoExtract[[:space:]]*=.*usr/share/locale' /etc/pacman.conf; then
+            printf '%s\n' 'NoExtract = !usr/share/locale/fr/LC_MESSAGES/plasma_applet_org.chathuranga.globalmenu.mo' >> /etc/pacman.conf
+          fi
+          pacman -U --noconfirm "$package"
           pacman -Q global-menu-kde
           pacman -Qk global-menu-kde
           pacman -Qql global-menu-kde | sed 's#^/##' > /tmp/arch-package-files.txt
