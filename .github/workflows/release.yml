@@ -272,12 +272,12 @@ jobs:
           package=$(find dist -maxdepth 1 -type f -name '*.deb' -print -quit)
           test -n "$package"
           dpkg-deb --info "$package"
-          dpkg-deb --contents "$package"
+          dpkg-deb --contents "$package" | tee dist/deb-contents.txt
           lintian --fail-on error "$package"
           test "$(dpkg-deb -f "$package" Architecture)" = "$(dpkg --print-architecture)"
-          dpkg-deb --contents "$package" | grep -Fq '/usr/share/doc/global-menu-kde/copyright'
-          dpkg-deb --contents "$package" | grep -Fq '/usr/share/doc/global-menu-kde/changelog.gz'
-          dpkg-deb --contents "$package" | grep -Fq '/usr/share/doc/global-menu-kde/CHANGELOG.md'
+          grep -Fq '/usr/share/doc/global-menu-kde/copyright' dist/deb-contents.txt
+          grep -Fq '/usr/share/doc/global-menu-kde/changelog.gz' dist/deb-contents.txt
+          grep -Fq '/usr/share/doc/global-menu-kde/CHANGELOG.md' dist/deb-contents.txt
 
       - name: Generate RPM
         if: matrix.family == 'rpm'
@@ -289,12 +289,12 @@ jobs:
           package=$(find dist -maxdepth 1 -type f -name '*.rpm' -print -quit)
           test -n "$package"
           rpm -qpi "$package"
-          rpm -qpl "$package"
+          rpm -qpl "$package" | tee dist/rpm-contents.txt
           rpmlint "$package"
           expected=$(uname -m)
           actual=$(rpm -qp --qf '%{ARCH}' "$package")
           test "$actual" = "$expected"
-          rpm -qpl "$package" | grep -Fq '/usr/share/doc/global-menu-kde/CHANGELOG.md'
+          grep -Fq '/usr/share/doc/global-menu-kde/CHANGELOG.md' dist/rpm-contents.txt
 
       - name: Install generated package
         shell: bash
