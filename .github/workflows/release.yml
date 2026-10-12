@@ -173,7 +173,10 @@ jobs:
           mkdir -p dist
           git archive --format=tar --prefix="global-menu-kde-${version}/" HEAD \
             | gzip -n > "dist/global-menu-kde-${version}.tar.gz"
-          sha256sum "dist/global-menu-kde-${version}.tar.gz" > "dist/global-menu-kde-${version}.tar.gz.sha256"
+          (
+            cd dist
+            sha256sum "global-menu-kde-${version}.tar.gz" > "global-menu-kde-${version}.tar.gz.sha256"
+          )
 
       - uses: actions/upload-artifact@v4
         with:
@@ -272,12 +275,12 @@ jobs:
           package=$(find dist -maxdepth 1 -type f -name '*.deb' -print -quit)
           test -n "$package"
           dpkg-deb --info "$package"
-          dpkg-deb --contents "$package" | tee dist/deb-contents.txt
+          dpkg-deb --contents "$package" | tee build/deb-contents.txt
           lintian --fail-on error "$package"
           test "$(dpkg-deb -f "$package" Architecture)" = "$(dpkg --print-architecture)"
-          grep -Fq '/usr/share/doc/global-menu-kde/copyright' dist/deb-contents.txt
-          grep -Fq '/usr/share/doc/global-menu-kde/changelog.gz' dist/deb-contents.txt
-          grep -Fq '/usr/share/doc/global-menu-kde/CHANGELOG.md' dist/deb-contents.txt
+          grep -Fq '/usr/share/doc/global-menu-kde/copyright' build/deb-contents.txt
+          grep -Fq '/usr/share/doc/global-menu-kde/changelog.gz' build/deb-contents.txt
+          grep -Fq '/usr/share/doc/global-menu-kde/CHANGELOG.md' build/deb-contents.txt
 
       - name: Generate RPM
         if: matrix.family == 'rpm'
@@ -289,12 +292,12 @@ jobs:
           package=$(find dist -maxdepth 1 -type f -name '*.rpm' -print -quit)
           test -n "$package"
           rpm -qpi "$package"
-          rpm -qpl "$package" | tee dist/rpm-contents.txt
+          rpm -qpl "$package" | tee build/rpm-contents.txt
           rpmlint "$package"
           expected=$(uname -m)
           actual=$(rpm -qp --qf '%{ARCH}' "$package")
           test "$actual" = "$expected"
-          grep -Fq '/usr/share/doc/global-menu-kde/CHANGELOG.md' dist/rpm-contents.txt
+          grep -Fq '/usr/share/doc/global-menu-kde/CHANGELOG.md' build/rpm-contents.txt
 
       - name: Install generated package
         shell: bash
@@ -515,6 +518,12 @@ jobs:
           test "$(find release-assets -maxdepth 1 -type f -name '*.rpm' | wc -l)" -eq 2
           test "$(find release-assets -maxdepth 1 -type f -name '*.pkg.tar.zst' | wc -l)" -eq 1
           test -f release-assets/PKGBUILD
+          test -f "release-assets/global-menu-kde-${version}.tar.gz.sha256"
+          (
+            cd release-assets
+            sha256sum -c "global-menu-kde-${version}.tar.gz.sha256"
+          )
+          test "$(find release-assets -maxdepth 1 -type f | wc -l)" -eq 9
           (
             cd release-assets
             shopt -s nullglob
@@ -544,4 +553,7 @@ jobs:
           test "$(grep -Ec '\.rpm$' /tmp/release-assets.txt)" -eq 2
           test "$(grep -Ec '\.pkg\.tar\.zst$' /tmp/release-assets.txt)" -eq 1
           grep -Fxq "global-menu-kde-${version}.tar.gz" /tmp/release-assets.txt
+          grep -Fxq "global-menu-kde-${version}.tar.gz.sha256" /tmp/release-assets.txt
+          grep -Fxq PKGBUILD /tmp/release-assets.txt
           grep -Fxq SHA256SUMS /tmp/release-assets.txt
+          test "$(wc -l < /tmp/release-assets.txt)" -eq 9
