@@ -10,6 +10,7 @@
 
 #include <QAbstractItemModel>
 #include <QPointer>
+#include <memory>
 
 class QQuickItem;
 class QMenu;
@@ -54,6 +55,7 @@ Q_SIGNALS:
 
 public Q_SLOTS:
     void trigger(QQuickItem *ctx, int idx);
+    void navigate(QQuickItem *ctx, int idx);
 
 protected:
     bool eventFilter(QObject *watched, QEvent *event) override;
@@ -62,11 +64,13 @@ private:
     QMenu *createMenu(int idx) const;
     void setCurrentIndex(int currentIndex);
     void onMenuAboutToHide();
+    void restoreSourceMenu();
 
     int m_currentIndex = -1;
     int m_viewType = FullView;
     QPointer<QMenu> m_currentMenu;
     QPointer<QMenu> m_sourceMenu;
+    std::unique_ptr<QMenu> m_popupMenu;
     QPointer<QQuickItem> m_buttonGrid;
     QPointer<QAbstractItemModel> m_model;
     static int s_refs;

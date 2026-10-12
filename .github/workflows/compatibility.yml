@@ -1,0 +1,149 @@
+name: Distribution compatibility
+
+on:
+  push:
+    branches: ['qa/**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: compatibility-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CMAKE_BUILD_PARALLEL_LEVEL: 2
+
+jobs:
+  installer-static:
+    name: Root installer static checks
+    runs-on: ubuntu-24.04
+    container: archlinux:latest
+    timeout-minutes: 15
+    steps:
+      - name: Install static tools in CI container
+        run: pacman -Syu --noconfirm git shellcheck
+      - uses: actions/checkout@v4
+      - name: Check installer and compatibility helper without executing installer
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash -n install.sh
+          bash -n scripts/compatibility-smoke.sh
+          shellcheck install.sh scripts/compatibility-smoke.sh
+
+  compatibility:
+    name: ${{ matrix.distro }} build, tests and installed smoke
+    runs-on: ubuntu-24.04
+    container: ${{ matrix.image }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - distro: debian-testing
+            image: debian:testing
+            family: deb
+          - distro: fedora-44
+            image: fedora:44
+            family: rpm
+          - distro: rocky-10
+            image: rockylinux:10
+            family: rpm
+          - distro: opensuse-tumbleweed
+            image: opensuse/tumbleweed:latest
+            family: suse
+          - distro: arch-latest
+            image: archlinux:latest
+            family: arch
+    env:
+      DISTRO: ${{ matrix.distro }}
+      FAMILY: ${{ matrix.family }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      # Bootstrap before checkout so minimal images have git and certificates.
+      # Failure is intentional when a repository lacks the required development stack.
+      - name: Install build and runtime dependencies inside CI container
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/compatibility-logs"
+          exec > >(tee "$RUNNER_TEMP/compatibility-logs/${DISTRO}-dependencies.log") 2>&1
+          cat /etc/os-release
+          case "$FAMILY" in
+            deb)
+              apt-get update
+              DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+                git ca-certificates build-essential cmake ninja-build extra-cmake-modules gettext \
+                qt6-base-dev qt6-declarative-dev libkf6config-dev libkf6coreaddons-dev \
+                libkf6i18n-dev libkf6windowsystem-dev libplasma-dev plasma-workspace-dev plasma-workspace \
+                dbus-daemon dbus-x11 xvfb xauth file dpkg-dev fakeroot gzip
+              ;;
+            rpm)
+              if [[ "$DISTRO" == rocky-10 ]]; then
+                # These repository changes apply only to this disposable job container.
+                dnf -y install dnf-plugins-core
+                dnf config-manager --set-enabled crb
+                dnf -y install epel-release
+              fi
+              dnf -y upgrade --refresh
+              dnf -y install \
+                git ca-certificates gcc-c++ cmake ninja-build extra-cmake-modules gettext \
+                qt6-qtbase-devel qt6-qtdeclarative-devel kf6-kconfig-devel kf6-kcoreaddons-devel \
+                kf6-ki18n-devel kf6-kitemmodels-devel kf6-kwindowsystem-devel \
+                libplasma-devel plasma-workspace-devel plasma-workspace rpm-build \
+                dbus-daemon xorg-x11-server-Xvfb xauth file findutils which gzip
+              ;;
+            suse)
+              zypper --non-interactive refresh
+              zypper --non-interactive install --no-recommends \
+                git ca-certificates gcc-c++ cmake ninja kf6-extra-cmake-modules gettext-tools \
+                qt6-base-devel qt6-declarative-devel kf6-kconfig-devel kf6-kcoreaddons-devel \
+                kf6-ki18n-devel kf6-kwindowsystem-devel libplasma6-devel \
+                plasma6-workspace-devel plasma6-workspace rpm-build \
+                dbus-1 dbus-1-x11 xorg-x11-server-Xvfb xauth file findutils gzip
+              ;;
+            arch)
+              pacman -Syu --noconfirm \
+                git ca-certificates base-devel cmake ninja extra-cmake-modules gettext \
+                qt6-base qt6-declarative kconfig kcoreaddons ki18n kwindowsystem \
+                libplasma plasma-workspace xorg-server-xvfb xorg-xauth dbus file
+              ;;
+          esac
+
+      - uses: actions/checkout@v4
+
+      - name: Build, test, package and smoke
+        run: |
+          set -euo pipefail
+          mkdir -p compatibility-logs
+          bash scripts/compatibility-smoke.sh "$DISTRO" "$FAMILY" 2>&1 \
+            | tee "compatibility-logs/${DISTRO}-pipeline.log"
+
+      - name: Capture installed dependency versions even after failure
+        if: always()
+        run: |
+          set -euo pipefail
+          mkdir -p compatibility-logs
+          cp "$RUNNER_TEMP/compatibility-logs/${DISTRO}-dependencies.log" compatibility-logs/
+          {
+            cat /etc/os-release
+            uname -a
+            case "$FAMILY" in
+              deb) dpkg-query -W ;;
+              rpm|suse) rpm -qa ;;
+              arch) pacman -Q ;;
+            esac
+          } > "compatibility-logs/${DISTRO}-versions.log" 2>&1
+
+      - name: Upload distro-qualified packages and diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: compatibility-${{ matrix.distro }}-${{ runner.arch }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            compatibility-logs/*
+            compatibility-dist/*
+          if-no-files-found: error

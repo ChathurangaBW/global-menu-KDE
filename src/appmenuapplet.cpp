@@ -53,7 +53,14 @@ AppMenuApplet::AppMenuApplet(QObject *parent, const KPluginMetaData &data, const
     });
 }
 
-AppMenuApplet::~AppMenuApplet() = default;
+AppMenuApplet::~AppMenuApplet()
+{
+    if (m_currentMenu) {
+        disconnect(m_currentMenu, nullptr, this, nullptr);
+        m_currentMenu->hide();
+    }
+    restoreSourceMenu();
+}
 
 void AppMenuApplet::init()
 {
@@ -67,6 +74,10 @@ QAbstractItemModel *AppMenuApplet::model() const
 void AppMenuApplet::setModel(QAbstractItemModel *model)
 {
     if (m_model != model) {
+        if (m_currentMenu) {
+            m_currentMenu->hide();
+        }
+        restoreSourceMenu();
         m_model = model;
         Q_EMIT modelChanged();
     }
@@ -80,6 +91,16 @@ int AppMenuApplet::view() const
 void AppMenuApplet::setView(int type)
 {
     if (m_viewType != type) {
+        if (m_currentMenu) {
+            m_currentMenu->hide();
+            m_currentMenu->removeEventFilter(this);
+            disconnect(m_currentMenu, &QMenu::aboutToHide, this, &AppMenuApplet::onMenuAboutToHide);
+        }
+        restoreSourceMenu();
+        m_currentMenu = nullptr;
+        m_sourceMenu = nullptr;
+        m_popupMenu.reset();
+        setCurrentIndex(-1);
         m_viewType = type;
         Q_EMIT viewChanged();
     }
@@ -114,6 +135,9 @@ void AppMenuApplet::setButtonGrid(QQuickItem *buttonGrid)
 QMenu *AppMenuApplet::createMenu(int idx) const
 {
     QMenu *menu = nullptr;
+    if (!m_model || idx < 0 || idx >= m_model->rowCount()) {
+        return nullptr;
+    }
 
     if (view() == CompactView) {
         if (auto *menuAction = m_model->data(QModelIndex(), AppMenuModel::ActionRole).value<QAction *>()) {
@@ -121,7 +145,8 @@ QMenu *AppMenuApplet::createMenu(int idx) const
         }
     } else if (view() == FullView) {
         const QModelIndex index = m_model->index(idx, 0);
-        if (auto *action = m_model->data(index, AppMenuModel::ActionRole).value<QAction *>()) {
+        if (auto *action = m_model->data(index, AppMenuModel::ActionRole).value<QAction *>();
+            action && action->isEnabled() && action->isVisible()) {
             menu = action->menu();
         }
     }
@@ -131,9 +156,32 @@ QMenu *AppMenuApplet::createMenu(int idx) const
 
 void AppMenuApplet::onMenuAboutToHide()
 {
-    auto menuAction = m_currentMenu->menuAction();
-    menuAction->setMenu(m_sourceMenu);
+    restoreSourceMenu();
     setCurrentIndex(-1);
+}
+
+void AppMenuApplet::restoreSourceMenu()
+{
+    if (!m_popupMenu || m_currentMenu != m_popupMenu.get()) {
+        return;
+    }
+    for (QAction *action : m_popupMenu->actions()) {
+        m_popupMenu->removeAction(action);
+        if (m_sourceMenu) {
+            m_sourceMenu->addAction(action);
+        }
+    }
+    if (m_sourceMenu) {
+        m_sourceMenu->menuAction()->setMenu(m_sourceMenu);
+    }
+}
+
+void AppMenuApplet::navigate(QQuickItem *ctx, int idx)
+{
+    // Hover/arrow navigation may open menus, never execute a direct command.
+    if (createMenu(idx)) {
+        trigger(ctx, idx);
+    }
 }
 
 Qt::Edges edgeFromLocation(Plasma::Types::Location location)
@@ -157,6 +205,9 @@ Qt::Edges edgeFromLocation(Plasma::Types::Location location)
 
 void AppMenuApplet::trigger(QQuickItem *ctx, int idx)
 {
+    if (!m_model || idx < 0 || idx >= m_model->rowCount()) {
+        return;
+    }
     if (m_currentIndex == idx) {
         return;
     }
@@ -174,17 +225,12 @@ void AppMenuApplet::trigger(QQuickItem *ctx, int idx)
         };
 
         if (view() == FullView) {
-            if (!m_currentMenu) {
-                m_currentMenu = new QMenu(qobject_cast<QWidget *>(actionMenu->parent()));
+            if (!m_popupMenu) {
+                m_popupMenu = std::make_unique<QMenu>();
+                m_currentMenu = m_popupMenu.get();
                 connect(m_currentMenu, &QMenu::aboutToHide, this, &AppMenuApplet::onMenuAboutToHide, Qt::UniqueConnection);
-            } else if (m_sourceMenu != actionMenu) {
-                auto menuAction = m_currentMenu->menuAction();
-                for (QAction *action : m_currentMenu->actions()) {
-                    m_currentMenu->removeAction(action);
-                    m_sourceMenu->addAction(action);
-                }
-                menuAction->setMenu(m_sourceMenu);
             }
+            restoreSourceMenu();
             m_sourceMenu = actionMenu;
             auto menuAction = m_sourceMenu->menuAction();
             for (QAction *action : m_sourceMenu->actions()) {
@@ -232,7 +278,8 @@ void AppMenuApplet::trigger(QQuickItem *ctx, int idx)
 
         setCurrentIndex(idx);
     } else {
-        if (auto *action = m_model->index(idx, 0).data(AppMenuModel::ActionRole).value<QAction *>()) {
+        if (auto *action = m_model->index(idx, 0).data(AppMenuModel::ActionRole).value<QAction *>();
+            action && action->isEnabled() && action->isVisible()) {
             Q_ASSERT(!action->menu());
             action->trigger();
         }
@@ -249,17 +296,21 @@ bool AppMenuApplet::eventFilter(QObject *watched, QEvent *event)
     if (event->type() == QEvent::KeyPress) {
         auto *e = static_cast<QKeyEvent *>(event);
 
-        if (e->key() == Qt::Key_Left) {
-            int desiredIndex = m_currentIndex - 1;
-            Q_EMIT requestActivateIndex(desiredIndex);
-            return true;
-        } else if (e->key() == Qt::Key_Right) {
-            if (menu->activeAction() && menu->activeAction()->menu()) {
+        if (e->key() == Qt::Key_Left || e->key() == Qt::Key_Right) {
+            const bool rtl = QGuiApplication::layoutDirection() == Qt::RightToLeft;
+            const int forwardKey = rtl ? Qt::Key_Left : Qt::Key_Right;
+            if (e->key() == forwardKey && menu->activeAction() && menu->activeAction()->menu()) {
                 return false;
             }
-
-            int desiredIndex = m_currentIndex + 1;
-            Q_EMIT requestActivateIndex(desiredIndex);
+            const int count = m_model ? m_model->rowCount() : 0;
+            const int step = e->key() == forwardKey ? 1 : -1;
+            for (int distance = 1; distance <= count; ++distance) {
+                const int desiredIndex = (m_currentIndex + step * distance + count) % count;
+                if (createMenu(desiredIndex)) {
+                    Q_EMIT requestActivateIndex(desiredIndex);
+                    break;
+                }
+            }
             return true;
         }
     } else if (event->type() == QEvent::MouseMove) {
@@ -282,7 +333,9 @@ bool AppMenuApplet::eventFilter(QObject *watched, QEvent *event)
             return false;
         }
 
-        Q_EMIT requestActivateIndex(buttonIndex);
+        if (createMenu(buttonIndex)) {
+            Q_EMIT requestActivateIndex(buttonIndex);
+        }
     }
 
     return false;

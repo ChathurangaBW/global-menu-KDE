@@ -272,9 +272,8 @@ DBusMenuImporter::~DBusMenuImporter()
 void DBusMenuImporter::slotLayoutUpdated(uint revision, int parentId)
 {
     Q_UNUSED(revision)
-    if (d->m_idsRefreshedByAboutToShow.remove(parentId)) {
-        return;
-    }
+    // AboutToShow refreshes do not identify the revision of a future signal.
+    // Never discard the next LayoutUpdated: it can be a genuine later removal.
     d->m_pendingLayoutUpdates << parentId;
     if (!d->m_pendingLayoutUpdateTimer.isActive()) {
         d->m_pendingLayoutUpdateTimer.start();
@@ -467,7 +466,6 @@ void DBusMenuImporter::slotAboutToShowDBusCallFinished(QDBusPendingCallWatcher *
 
     bool needRefresh = reply.argumentAt<0>();
     if (needRefresh || menu->actions().isEmpty()) {
-        d->m_idsRefreshedByAboutToShow << id;
         d->refresh(id);
     } else {
         Q_EMIT menuUpdated(menu);

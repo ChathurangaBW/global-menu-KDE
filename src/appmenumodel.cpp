@@ -88,6 +88,13 @@ AppMenuModel::AppMenuModel(QObject *parent)
     // Preserve KDE's native Wayland menu-search behavior for real application
     // menus. The desktop fallback itself remains exactly seven top-level menus.
     if (KWindowSystem::isPlatformWayland()) {
+        initializeSearch();
+    }
+}
+
+void AppMenuModel::initializeSearch()
+{
+    if (!m_searchAction) {
         m_searchAction = new QAction(this);
         m_searchAction->setText(i18n("Search"));
         m_searchAction->setObjectName(QStringLiteral("appmenu"));
@@ -106,8 +113,11 @@ AppMenuModel::AppMenuModel(QObject *parent)
             insertSearchActionsIntoMenu(searchBar->text());
         });
         connect(searchBar, &QLineEdit::returnPressed, this, [this]() mutable {
-            if (!m_currentSearchActions.empty()) {
-                m_currentSearchActions.constFirst()->trigger();
+            for (const auto &action : std::as_const(m_currentSearchActions)) {
+                if (action && action->isEnabled() && action->isVisible()) {
+                    action->trigger();
+                    break;
+                }
             }
         });
         connect(this, &AppMenuModel::modelNeedsUpdate, searchBar, [this, searchBar]() mutable {
@@ -199,7 +209,9 @@ void AppMenuModel::removeSearchActionsFromMenu()
     }
 
     for (auto action : std::as_const(m_currentSearchActions)) {
-        m_searchAction->menu()->removeAction(action);
+        if (action) {
+            m_searchAction->menu()->removeAction(action);
+        }
     }
     m_currentSearchActions.clear();
 }
@@ -207,13 +219,16 @@ void AppMenuModel::removeSearchActionsFromMenu()
 void AppMenuModel::insertSearchActionsIntoMenu(const QString &filter)
 {
     removeSearchActionsFromMenu();
-    if (filter.isEmpty() || usingDesktopFallback()) {
+    if (!m_searchAction || !m_searchAction->menu() || filter.isEmpty() || usingDesktopFallback()) {
         return;
     }
 
     const auto actions = flatActionList();
     for (const auto &action : actions) {
-        if (action->text().contains(filter, Qt::CaseInsensitive)) {
+        connect(action, &QObject::destroyed, this, &AppMenuModel::modelNeedsUpdate,
+                Qt::ConnectionType(Qt::QueuedConnection | Qt::UniqueConnection));
+        if (action->isEnabled() && action->isVisible() && !action->isSeparator()
+            && action->text().contains(filter, Qt::CaseInsensitive)) {
             m_searchAction->menu()->addAction(action);
             m_currentSearchActions << action;
         }
@@ -404,7 +419,11 @@ void AppMenuModel::updateApplicationMenu(const QString &serviceName, const QStri
         }
 
         QMenu *applicationMenu = m_importer->menu();
-        if (!applicationMenu || menu != applicationMenu) {
+        if (!applicationMenu) {
+            return;
+        }
+        if (menu != applicationMenu) {
+            Q_EMIT modelNeedsUpdate();
             return;
         }
 

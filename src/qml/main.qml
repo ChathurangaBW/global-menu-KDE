@@ -121,9 +121,11 @@ PlasmoidItem {
 
                 down: Plasmoid.currentIndex === index
                 visible: text !== "" && (activeActions?.visible ?? false)
+                enabled: activeActions?.enabled ?? false
 
                 menuIsOpen: Plasmoid.currentIndex !== -1
                 onActivated: Plasmoid.trigger(this, index)
+                onNavigated: Plasmoid.navigate(this, index)
 
                 KeyboardIndicator.KeyState {
                     id: altState

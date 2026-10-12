@@ -81,6 +81,8 @@ private Q_SLOTS:
     void update();
 
 private:
+    friend class AppMenuModelTest;
+    void initializeSearch();
     void showDesktopFallback();
     void connectApplicationActions();
     void removeSearchActionsFromMenu();
@@ -99,7 +101,7 @@ private:
     std::unique_ptr<QMenu> m_searchMenu;
     QPointer<QMenu> m_menu;
     QPointer<QAction> m_searchAction;
-    QList<QAction *> m_currentSearchActions;
+    QList<QPointer<QAction>> m_currentSearchActions;
 
     QDBusServiceWatcher *m_serviceWatcher;
     QString m_serviceName;

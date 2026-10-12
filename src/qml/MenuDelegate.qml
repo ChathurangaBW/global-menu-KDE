@@ -17,11 +17,12 @@ AbstractButton {
     property bool menuIsOpen: false
 
     signal activated()
+    signal navigated()
 
     // QMenu opens on press, so replicate the native Global Menu behavior.
     hoverEnabled: true
 
-    onHoveredChanged: if (hovered && menuIsOpen) { activated(); }
+    onHoveredChanged: if (hovered && menuIsOpen) { navigated(); }
     onPressed: activated()
 
     enum State {

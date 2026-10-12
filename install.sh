@@ -7,6 +7,7 @@ REPO_URL="${GLOBAL_MENU_KDE_REPO:-https://github.com/ChathurangaBW/global-menu-K
 REF="${GLOBAL_MENU_KDE_REF:-main}"
 INSTALL_DEPS=1
 UNINSTALL=0
+CHECK_ONLY=0
 TEMP_DIR=""
 
 usage() {
@@ -18,6 +19,8 @@ Usage:
   curl -fsSL https://raw.githubusercontent.com/ChathurangaBW/global-menu-KDE/main/install.sh | bash
 
 Options:
+  --check         Check Plasma >= 6.5 and local build tools without installing,
+                  fetching sources, building, or invoking sudo/doas.
   --no-deps       Do not install build dependencies. Use this on unsupported
                   distributions after installing the dependencies manually.
   --ref REF       Git branch/tag/ref to fetch when the installer is piped or
@@ -48,6 +51,10 @@ trap cleanup EXIT
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
+        --check)
+            CHECK_ONLY=1
+            shift
+            ;;
         --no-deps)
             INSTALL_DEPS=0
             shift
@@ -71,16 +78,22 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-if [[ ${EUID:-$(id -u)} -eq 0 ]]; then
+if [[ ${CHECK_ONLY} -eq 1 && ${UNINSTALL} -eq 1 ]]; then
+    fail "--check cannot be combined with --uninstall"
+fi
+
+if [[ ${CHECK_ONLY} -eq 0 && ${EUID:-$(id -u)} -eq 0 ]]; then
     fail "run this installer as your regular desktop user, without sudo"
 fi
 
+if [[ ${CHECK_ONLY} -eq 0 ]]; then
 if command -v sudo >/dev/null 2>&1; then
     ROOT=(sudo)
 elif command -v doas >/dev/null 2>&1; then
     ROOT=(doas)
 else
     fail "sudo or doas is required for system-wide installation"
+fi
 fi
 
 as_root() {
@@ -105,17 +118,61 @@ fi
 
 PLASMASHELL_PATH="$(command -v plasmashell || true)"
 if [[ -z "${PLASMASHELL_PATH}" ]]; then
-    fail "KDE Plasma 6 is required (plasmashell was not found)"
+    fail "KDE Plasma >= 6.5 is required (plasmashell was not found)"
 fi
-printf 'Detected Plasma runtime: %s\n' "${PLASMASHELL_PATH}"
-printf 'CMake will verify Plasma 6 development compatibility during configure.\n'
+
+dnf_repository_hint() {
+    cat >&2 <<'EOF'
+On Enterprise Linux 10 (EL10), Plasma/KF6 development packages may require
+EPEL 10 and CRB (CodeReady Builder). Ask your administrator to verify the
+appropriate repositories and package availability for your distribution.
+This installer never enables repositories. Plasma older than 6.5 is unsupported
+even if development dependencies are available.
+EOF
+}
+
+if command -v dnf >/dev/null 2>&1; then
+    dnf_repository_hint
+fi
+if ! plasma_version_output="$(LC_ALL=C "${PLASMASHELL_PATH}" --version 2>&1)"; then
+    fail "could not query plasmashell --version: ${plasma_version_output}"
+fi
+# Accept distribution suffixes, but require the actual plasmashell version line.
+if [[ ${plasma_version_output} =~ (^|$'\n')plasmashell[[:blank:]]+([0-9]+)\.([0-9]+)\.([0-9]+)([^0-9.]|$) ]]; then
+    plasma_major=$((10#${BASH_REMATCH[2]}))
+    plasma_minor=$((10#${BASH_REMATCH[3]}))
+else
+    fail "cannot parse Plasma runtime version: ${plasma_version_output}"
+fi
+if (( plasma_major < 6 || (plasma_major == 6 && plasma_minor < 5) )); then
+    fail "KDE Plasma >= 6.5 is required (found ${plasma_version_output}); no dependencies were changed"
+fi
+printf 'Detected Plasma runtime: %s (%s)\n' "${plasma_version_output}" "${PLASMASHELL_PATH}"
+printf 'CMake must still verify Plasma >= 6.5 development files and Qt/KF compatibility.\n'
+
+check_build_tools() {
+    local command_name missing=0
+    for command_name in git cmake ninja c++ ctest msgfmt ldd; do
+        if ! command -v "${command_name}" >/dev/null 2>&1; then
+            printf 'Required build tool is missing: %s\n' "${command_name}" >&2
+            missing=1
+        fi
+    done
+    return "${missing}"
+}
+
+if [[ ${CHECK_ONLY} -eq 1 ]]; then
+    check_build_tools || fail "preflight failed; install missing tools manually or rerun without --check"
+    printf 'Preflight passed (runtime and tool presence only). No changes made.\n'
+    exit 0
+fi
 
 install_dependencies() {
     if command -v apt-get >/dev/null 2>&1; then
         printf 'Installing build dependencies with apt...\n'
         as_root apt-get update
         as_root env DEBIAN_FRONTEND=noninteractive apt-get install -y \
-            git build-essential cmake ninja-build extra-cmake-modules \
+            git gettext build-essential cmake ninja-build extra-cmake-modules \
             qt6-base-dev qt6-declarative-dev \
             libkf6config-dev libkf6i18n-dev libkf6windowsystem-dev \
             libplasma-dev plasma-workspace-dev plasma-workspace dbus
@@ -124,18 +181,21 @@ install_dependencies() {
 
     if command -v dnf >/dev/null 2>&1; then
         printf 'Installing build dependencies with dnf...\n'
-        as_root dnf -y install \
-            git gcc-c++ cmake ninja-build extra-cmake-modules \
+        if ! as_root dnf -y install \
+            git gettext gcc-c++ cmake ninja-build extra-cmake-modules \
             qt6-qtbase-devel qt6-qtdeclarative-devel \
             kf6-kconfig-devel kf6-ki18n-devel kf6-kwindowsystem-devel \
-            libplasma-devel plasma-workspace-devel plasma-workspace dbus-daemon
+            libplasma-devel plasma-workspace-devel plasma-workspace dbus-daemon; then
+            dnf_repository_hint
+            fail "dnf dependency installation failed; check enabled repositories and package availability"
+        fi
         return
     fi
 
     if command -v pacman >/dev/null 2>&1; then
         printf 'Installing build dependencies with pacman...\n'
         as_root pacman -Syu --needed --noconfirm \
-            git base-devel cmake ninja extra-cmake-modules \
+            git gettext base-devel cmake ninja extra-cmake-modules \
             qt6-base qt6-declarative \
             kconfig ki18n kwindowsystem libplasma plasma-workspace dbus
         return
@@ -144,7 +204,7 @@ install_dependencies() {
     if command -v zypper >/dev/null 2>&1; then
         printf 'Installing build dependencies with zypper...\n'
         as_root zypper --non-interactive install --no-recommends \
-            git gcc-c++ cmake ninja kf6-extra-cmake-modules \
+            git gettext gcc-c++ cmake ninja kf6-extra-cmake-modules \
             qt6-base-devel qt6-declarative-devel \
             kf6-kconfig-devel kf6-ki18n-devel kf6-kwindowsystem-devel \
             libplasma6-devel plasma6-workspace-devel plasma6-workspace dbus-1
@@ -158,10 +218,7 @@ if [[ ${INSTALL_DEPS} -eq 1 ]]; then
     install_dependencies
 fi
 
-for command_name in git cmake ninja c++; do
-    command -v "${command_name}" >/dev/null 2>&1 || \
-        fail "required build tool is missing: ${command_name}"
-done
+check_build_tools || fail "required build tools are missing"
 
 SOURCE_DIR=""
 script_path="${BASH_SOURCE[0]:-}"

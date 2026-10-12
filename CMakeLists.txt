@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 cmake_minimum_required(VERSION 3.22)
 
-project(global-menu-kde VERSION 1.1.2 LANGUAGES CXX)
+project(global-menu-kde VERSION 1.1.3 LANGUAGES CXX)
 
 set(QT_MIN_VERSION "6.6.0")
 set(KF6_MIN_VERSION "6.0.0")
-set(PLASMA_MIN_VERSION "6.0.0")
+set(PLASMA_MIN_VERSION "6.5.0")
 
 find_package(ECM ${KF6_MIN_VERSION} REQUIRED NO_MODULE)
 set(CMAKE_MODULE_PATH ${ECM_MODULE_PATH})

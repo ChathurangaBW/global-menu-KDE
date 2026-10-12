@@ -9,6 +9,7 @@
 #include <QDBusMessage>
 #include <QDBusVirtualObject>
 #include <QMenu>
+#include <QLineEdit>
 #include <QTest>
 #include <QVariant>
 
@@ -92,7 +93,7 @@ public:
             if (parentId == 0) {
                 root.children.append(item(1, QStringLiteral("_File"), true));
                 root.children.append(item(2, QStringLiteral("_About")));
-            } else if (parentId == 1) {
+            } else if (parentId == 1 && includeOpen) {
                 root.children.append(item(10, QStringLiteral("_Open")));
             }
             connection.send(message.createReply({QVariant::fromValue(1u), QVariant::fromValue(root)}));
@@ -125,6 +126,7 @@ public:
     }
 
     int getLayoutCalls = 0;
+    bool includeOpen = true;
     QList<int> aboutToShowIds;
     QList<Event> events;
 };
@@ -136,6 +138,7 @@ class AppMenuModelTest final : public QObject
 
 private Q_SLOTS:
     void fallbackApplicationFallback();
+    void destroyedSearchAction();
 };
 
 void AppMenuModelTest::fallbackApplicationFallback()
@@ -198,11 +201,42 @@ void AppMenuModelTest::fallbackApplicationFallback()
     aboutAction->trigger();
     QTRY_VERIFY_WITH_TIMEOUT(fakeMenu.hasEvent(2, QStringLiteral("clicked")), 5000);
 
+    // Exercise the production search code even with an offscreen test platform.
+    model.initializeSearch();
+    auto *searchBar = model.m_searchMenu->findChild<QLineEdit *>();
+    QVERIFY(searchBar);
+    searchBar->setText(QStringLiteral("Open"));
+    QCOMPARE(model.m_currentSearchActions.size(), 1);
+    QPointer<QAction> removedAction = openAction;
+    fakeMenu.includeOpen = false;
+    auto changed = QDBusMessage::createSignal(QString::fromLatin1(menuPath),
+        QString::fromLatin1(menuInterface), QStringLiteral("LayoutUpdated"));
+    changed.setArguments({QVariant::fromValue(2u), 1});
+    QVERIFY(connection.send(changed));
+    QTRY_VERIFY_WITH_TIMEOUT(removedAction.isNull(), 5000);
+    QTRY_VERIFY_WITH_TIMEOUT(model.m_currentSearchActions.isEmpty(), 5000);
+    QVERIFY(QMetaObject::invokeMethod(searchBar, "returnPressed"));
+
     model.updateApplicationMenu(QString(), QString());
     QTRY_VERIFY_WITH_TIMEOUT(model.usingDesktopFallback(), 5000);
     QTRY_COMPARE_WITH_TIMEOUT(model.rowCount(), 7, 5000);
 
     connection.unregisterObject(QString::fromLatin1(menuPath), QDBusConnection::UnregisterNode);
+}
+
+void AppMenuModelTest::destroyedSearchAction()
+{
+    AppMenuModel model;
+    model.initializeSearch();
+    auto *searchBar = model.m_searchMenu->findChild<QLineEdit *>();
+    QVERIFY(searchBar);
+    auto *action = new QAction(QStringLiteral("Transient"));
+    model.m_currentSearchActions.append(action);
+    delete action;
+    // Return and cleanup can race with a submenu's deferred destruction.
+    QVERIFY(QMetaObject::invokeMethod(searchBar, "returnPressed"));
+    model.removeSearchActionsFromMenu();
+    QVERIFY(model.m_currentSearchActions.isEmpty());
 }
 
 QTEST_MAIN(AppMenuModelTest)
