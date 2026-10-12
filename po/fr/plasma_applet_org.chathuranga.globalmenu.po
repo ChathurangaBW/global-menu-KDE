@@ -154,3 +154,133 @@ msgstr "Rechercher"
 
 msgid "Search…"
 msgstr "Rechercher…"
+
+msgid "An item named %1 already exists."
+msgstr "Un élément nommé %1 existe déjà."
+
+msgid "Application Launchers (*.desktop)"
+msgstr "Lanceurs d’applications (*.desktop)"
+
+msgid "Basic Link"
+msgstr "Lien simple"
+
+msgid "Basic Link to File or Directory"
+msgstr "Lien vers un fichier ou un dossier"
+
+msgid "Bluetooth…"
+msgstr "Bluetooth…"
+
+msgid "Create New Folder"
+msgstr "Créer un dossier"
+
+msgid "Create New HTML File"
+msgstr "Créer un fichier HTML"
+
+msgid "Create New Text File"
+msgstr "Créer un fichier texte"
+
+msgid "Date and Time…"
+msgstr "Date et heure…"
+
+msgid "Enter a name without path separators."
+msgstr "Saisissez un nom sans séparateurs de chemin."
+
+msgid "Enter a valid URL."
+msgstr "Saisissez une URL valide."
+
+msgid "Existing file or directory:"
+msgstr "Fichier ou dossier existant :"
+
+msgid "Find Files…"
+msgstr "Rechercher des fichiers…"
+
+msgid "Force Quit Window"
+msgstr "Forcer la fermeture de la fenêtre"
+
+msgid "KDE Community"
+msgstr "Communauté KDE"
+
+msgid "KDE Global Menu Documentation"
+msgstr "Documentation de KDE Global Menu"
+
+msgid "KDE Global Menu Issues"
+msgstr "Signalements de KDE Global Menu"
+
+msgid "Link to Application"
+msgstr "Lien vers une application"
+
+msgid "Link to Location"
+msgstr "Lien vers un emplacement"
+
+msgid "Location URL:"
+msgstr "URL de l’emplacement :"
+
+msgid "Manage Disk Usage"
+msgstr "Gérer l’utilisation des disques"
+
+msgid "Name:"
+msgstr "Nom :"
+
+msgid "New Folder"
+msgstr "Nouveau dossier"
+
+msgid "New HTML File.html"
+msgstr "Nouveau fichier HTML.html"
+
+msgid "New Link.desktop"
+msgstr "Nouveau lien.desktop"
+
+msgid "New Text File.txt"
+msgstr "Nouveau fichier texte.txt"
+
+msgid "Power Management…"
+msgstr "Gestion de l’énergie…"
+
+msgid "Region and Language…"
+msgstr "Région et langue…"
+
+msgid "Restart Plasma Shell"
+msgstr "Redémarrer Plasma Shell"
+
+msgid "Restart Plasma Shell now? Panels and desktop widgets will briefly disappear."
+msgstr "Redémarrer Plasma Shell maintenant ? Les panneaux et les composants graphiques du bureau disparaîtront brièvement."
+
+msgid "Run Command…"
+msgstr "Exécuter une commande…"
+
+msgid "Terminal"
+msgstr "Terminal"
+
+msgid "The Desktop folder is not available."
+msgstr "Le dossier Bureau n’est pas disponible."
+
+msgid "The application link could not be created."
+msgstr "Impossible de créer le lien vers l’application."
+
+msgid "The folder could not be created."
+msgstr "Impossible de créer le dossier."
+
+msgid "The link could not be created. Check the name and target."
+msgstr "Impossible de créer le lien. Vérifiez le nom et la cible."
+
+msgid "The selected target does not exist."
+msgstr "La cible sélectionnée n’existe pas."
+
+msgid "This will force the selected window to close. Continue?"
+msgstr "La fermeture de la fenêtre sélectionnée sera forcée. Continuer ?"
+
+msgid "Use single button for application menu"
+msgstr "Utiliser un seul bouton pour le menu de l’application"
+
+msgid "Show full application menu"
+msgstr "Afficher le menu complet de l’application"
+
+msgid "Show menus for apps on different screens"
+msgstr "Afficher les menus des applications sur les autres écrans"
+
+msgid "Appearance"
+msgstr "Apparence"
+
+msgctxt "@info:usagetip"
+msgid "Open a menu"
+msgstr "Ouvrir un menu"

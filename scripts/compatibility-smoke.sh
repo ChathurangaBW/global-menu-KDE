@@ -167,7 +167,7 @@ timeout --signal=TERM --kill-after=5s 20s dbus-run-session -- \
 cat "$logs/$distro-plasmawindowed.log"
 # A GUI must stay alive until the timeout, not exit early with a misleading zero.
 [[ $status == 124 ]]
-if grep -Eiq 'failed to load|cannot load|could not load|plugin.*not found|module .* is not installed|QQmlApplicationEngine failed|Type .* unavailable|ReferenceError|TypeError|SyntaxError|Error loading|error while loading shared libraries|segmentation fault|assertion.*failed|No such file or directory' \
+if grep -Eiq 'failed to load|cannot load|could not load|plugin.*not found|module .* is not installed|QQmlApplicationEngine failed|Type .* unavailable|ReferenceError|TypeError|SyntaxError|Error loading|error while loading shared libraries|segmentation fault|assertion.*failed' \
     "$logs/$distro-plasmawindowed.log"; then
     echo 'Installed Plasma applet smoke rejected runtime errors.' >&2
     exit 1

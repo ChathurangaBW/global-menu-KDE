@@ -49,7 +49,7 @@ jobs:
             image: fedora:44
             family: rpm
           - distro: rocky-10
-            image: rockylinux:10
+            image: rockylinux/rockylinux:10
             family: rpm
           - distro: opensuse-tumbleweed
             image: opensuse/tumbleweed:latest
@@ -103,7 +103,7 @@ jobs:
                 qt6-base-devel qt6-declarative-devel kf6-kconfig-devel kf6-kcoreaddons-devel \
                 kf6-ki18n-devel kf6-kwindowsystem-devel libplasma6-devel \
                 plasma6-workspace-devel plasma6-workspace rpm-build \
-                dbus-1 dbus-1-x11 xorg-x11-server-Xvfb xauth file findutils gzip
+                dbus-1 xorg-x11-server-Xvfb xauth file findutils gzip
               ;;
             arch)
               pacman -Syu --noconfirm \
