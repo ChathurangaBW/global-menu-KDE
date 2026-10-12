@@ -143,24 +143,32 @@ mo=/usr/share/locale/fr/LC_MESSAGES/plasma_applet_org.chathuranga.globalmenu.mo
 msgunfmt "$mo" > "$logs/$distro-installed-fr.po"
 grep -q '^msgstr "[^"].*"' "$logs/$distro-installed-fr.po"
 
-# Use Xvfb directly: not every distribution ships the xvfb-run wrapper.
-# -displayfd allocates a free server number and signals readiness.
+# Prefer an X11-backed applet smoke where Xvfb is available. Rocky Linux 10
+# does not currently ship Xvfb in its enabled BaseOS/AppStream/CRB/EPEL set,
+# so retain a real plasmawindowed loader check through Qt's offscreen backend.
 unset QT_PLUGIN_PATH QML2_IMPORT_PATH QML_IMPORT_PATH
-export QT_QPA_PLATFORM=xcb LIBGL_ALWAYS_SOFTWARE=1
+export LIBGL_ALWAYS_SOFTWARE=1
 export XDG_RUNTIME_DIR="$build/runtime"
 mkdir -p "$XDG_RUNTIME_DIR"
 chmod 700 "$XDG_RUNTIME_DIR"
-Xvfb -displayfd 3 -screen 0 1280x800x24 -nolisten tcp \
-    3> "$build/x-display" > "$logs/$distro-xvfb.log" 2>&1 &
-xvfb_pid=$!
-for ((attempt=0; attempt<100; attempt++)); do
-    [[ -s $build/x-display ]] && break
-    kill -0 "$xvfb_pid"
-    sleep 0.1
-done
-[[ -s $build/x-display ]]
-DISPLAY=":$(cat "$build/x-display")"
-export DISPLAY
+if command -v Xvfb >/dev/null 2>&1; then
+    export QT_QPA_PLATFORM=xcb
+    Xvfb -displayfd 3 -screen 0 1280x800x24 -nolisten tcp \
+        3> "$build/x-display" > "$logs/$distro-xvfb.log" 2>&1 &
+    xvfb_pid=$!
+    for ((attempt=0; attempt<100; attempt++)); do
+        [[ -s $build/x-display ]] && break
+        kill -0 "$xvfb_pid"
+        sleep 0.1
+    done
+    [[ -s $build/x-display ]]
+    DISPLAY=":$(cat "$build/x-display")"
+    export DISPLAY
+else
+    export QT_QPA_PLATFORM=offscreen
+    unset DISPLAY
+    printf '%s\n' 'Xvfb unavailable; using Qt offscreen platform.' > "$logs/$distro-xvfb.log"
+fi
 status=0
 timeout --signal=TERM --kill-after=5s 20s dbus-run-session -- \
     plasmawindowed org.chathuranga.globalmenu > "$logs/$distro-plasmawindowed.log" 2>&1 || status=$?

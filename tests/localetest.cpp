@@ -11,7 +11,6 @@ class LocaleTest : public QObject
 private Q_SLOTS:
     void usesProcessLocale()
     {
-        KLocalizedString::addDomainLocaleDir("plasma_applet_org.chathuranga.globalmenu", QStringLiteral(TEST_LOCALE_DIR));
         // No setLanguages override: use exactly the language of this process.
         const bool french = qEnvironmentVariable("LANGUAGE") == QStringLiteral("fr");
         DesktopFallback fallback;
@@ -26,5 +25,15 @@ private Q_SLOTS:
         QCOMPARE(i18nc("@info:usagetip", "Open a menu"), french ? QStringLiteral("Ouvrir un menu") : QStringLiteral("Open a menu"));
     }
 };
-QTEST_MAIN(LocaleTest)
+
+int main(int argc, char **argv)
+{
+    // Register the test-only catalog before QApplication initializes KI18n from
+    // the process locale. This keeps the test independent of system catalogs.
+    KLocalizedString::addDomainLocaleDir("plasma_applet_org.chathuranga.globalmenu", QStringLiteral(TEST_LOCALE_DIR));
+    QApplication application(argc, argv);
+    LocaleTest test;
+    return QTest::qExec(&test, argc, argv);
+}
+
 #include "localetest.moc"

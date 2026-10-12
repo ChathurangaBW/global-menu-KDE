@@ -94,7 +94,10 @@ jobs:
                 qt6-qtbase-devel qt6-qtdeclarative-devel kf6-kconfig-devel kf6-kcoreaddons-devel \
                 kf6-ki18n-devel kf6-kitemmodels-devel kf6-kwindowsystem-devel \
                 libplasma-devel plasma-workspace-devel plasma-workspace rpm-build \
-                dbus-daemon xorg-x11-server-Xvfb xauth file findutils which gzip
+                dbus-daemon xauth file findutils which gzip
+              if [[ "$DISTRO" != rocky-10 ]]; then
+                dnf -y install xorg-x11-server-Xvfb
+              fi
               ;;
             suse)
               zypper --non-interactive refresh
