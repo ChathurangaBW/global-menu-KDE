@@ -101,7 +101,7 @@ Desktop Undo, desktop icon arrangement, and desktop Edit Mode are intentionally 
 
 ### Recommended: portable source installer
 
-KDE Global Menu includes a portable Plasma 6 source installer. It compiles the applet against the Qt, KDE Frameworks, and Plasma ABI installed on your system, runs the tests, audits the resulting plugin, and installs it into KDE's normal system plugin path under `/usr`.
+KDE Global Menu includes a portable Plasma 6 source installer. It requires **Plasma 6.5 or newer**, compiles the applet against the Qt, KDE Frameworks, and Plasma ABI installed on your system, runs the tests, audits the resulting plugin, and installs it into KDE's normal system plugin path under `/usr`.
 
 Run the installer as your normal desktop user. **Do not prefix it with `sudo`.** It requests elevation only when dependencies or the final system installation require it.
 
@@ -117,7 +117,7 @@ cd global-menu-KDE
 bash ./install.sh
 ```
 
-The installer recognizes build dependencies for `apt`, `dnf`, `pacman`, and `zypper`. On another Plasma 6 distribution, install the Qt 6, KF6, and Plasma development dependencies yourself, then run:
+The installer recognizes build dependencies for `apt`, `dnf`, `pacman`, and `zypper`. Run `bash ./install.sh --check` for a read-only runtime/tool preflight. On another Plasma 6 distribution, install the Qt 6, KF6, Plasma 6.5+, and gettext development dependencies yourself, then run:
 
 ```bash
 bash ./install.sh --no-deps
@@ -209,6 +209,9 @@ The CI contract checks more than rendering:
 - `plasmawindowed` smoke loading
 - Native package creation, installation, discovery, and uninstallation
 - Arch Linux, Fedora x86_64/aarch64, and Debian amd64/arm64 release jobs
+- Independent Debian testing, Fedora, Rocky/EPEL, Arch, and openSUSE compatibility jobs
+- Automatic locale selection, French catalog coverage, and unsupported-locale English fallback
+- Full/compact popup restoration, safe hover navigation, and LTR/RTL keyboard wrapping
 - Reproducible source archive and checksum generation
 - ShellCheck and Bash syntax validation
 - End-to-end `install.sh --no-deps` installation as a non-root user

@@ -4,15 +4,22 @@ All notable changes to KDE Global Menu are documented here.
 
 ## [Unreleased]
 
+## [1.1.3]
+
 ### Fixed
 
-- Add KDE translation catalog installation for the desktop fallback and Wayland menu search.
-- Use the user's existing locale automatically without adding a separate language setting.
-- Add initial French translations for the fallback menus and search labels.
+- Prevent stale Wayland search results after applications dynamically remove submenu actions.
+- Preserve submenu contents when switching between full and compact representations.
+- Prevent hover navigation from executing direct application commands.
+- Wrap and mirror keyboard navigation correctly for right-to-left layouts.
+- Require Plasma 6.5, the first supported applet-build API baseline.
+- Complete French translations for fallback actions, dialogs, and configuration labels.
 
 ### Testing
 
-- Validate catalog syntax and installation through CTest and a live Plasma smoke test.
+- Add controller lifecycle, disabled-action, RTL, installer preflight, and process-locale tests.
+- Add independent Debian, Fedora, Enterprise Linux, Arch, and openSUSE compatibility jobs.
+- Validate the public package install, dependency closure, native discovery, translation catalog, and uninstall paths.
 
 ## [1.1.2]
 

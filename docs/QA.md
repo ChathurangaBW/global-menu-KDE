@@ -33,6 +33,12 @@ The repository CI covers:
 - end-to-end `install.sh --no-deps` execution as a non-root desktop user;
 - persistent uninstall-manifest creation;
 - `global-menu-kde-uninstall` removal verification.
+- dynamic submenu removal while Wayland search is active;
+- full/compact representation switching without losing submenu actions;
+- hover navigation without execution of direct commands;
+- LTR and RTL keyboard wrapping across hidden, disabled, and direct actions;
+- process-locale French selection and unsupported-locale English fallback;
+- independent Debian testing, Fedora, Rocky/EPEL, Arch, and openSUSE compatibility jobs.
 
 The staged smoke test may temporarily set `QT_PLUGIN_PATH` only to point `plasmawindowed` at an uninstalled CI staging tree. The system-install smoke explicitly unsets it and verifies native discovery. The user-facing installer never creates a plugin-path override.
 

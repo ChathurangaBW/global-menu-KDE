@@ -1,3 +1,13 @@
+global-menu-kde (1.1.3) unstable; urgency=medium
+
+  * Require Plasma 6.5 and add read-only installer compatibility checks.
+  * Fix dynamic menu search lifetime and submenu layout updates.
+  * Preserve menus across full/compact view changes and prevent hover commands.
+  * Add RTL keyboard navigation and expanded French translations.
+  * Add cross-distribution compatibility validation.
+
+ -- ChathurangaBW <ChathurangaBW@users.noreply.github.com>  Mon, 12 Oct 2026 05:40:00 +0000
+
 global-menu-kde (1.1.2) unstable; urgency=medium
 
   * Install KDE translation catalogs for the desktop fallback and Wayland search.
