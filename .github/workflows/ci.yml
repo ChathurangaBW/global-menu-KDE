@@ -25,7 +25,7 @@ jobs:
       - name: Install Plasma 6 build/runtime dependencies
         run: >-
           pacman -Syu --noconfirm
-          git base-devel shellcheck cmake ninja extra-cmake-modules
+          git base-devel shellcheck cmake ninja extra-cmake-modules gettext
           qt6-base qt6-declarative
           kconfig kcoreaddons ki18n kwindowsystem
           libplasma plasma-workspace xorg-server-xvfb dbus file
@@ -38,8 +38,8 @@ jobs:
       - name: Validate repository and installer scripts
         run: |
           git diff --check
-          bash -n scripts/install-system.sh scripts/uninstall-system.sh
-          shellcheck scripts/install-system.sh scripts/uninstall-system.sh
+          bash -n install.sh scripts/*.sh tests/*.sh
+          shellcheck install.sh scripts/*.sh tests/*.sh
           ! grep -Rq 'QT_PLUGIN_PATH.*global-menu-kde.sh\|export QT_PLUGIN_PATH' scripts README.md
 
       - name: Configure
@@ -65,6 +65,7 @@ jobs:
           file "$plugin"
           ldd "$plugin" | tee /tmp/ldd.txt
           ! grep -q 'not found' /tmp/ldd.txt
+          test -s "$GITHUB_WORKSPACE/stage/usr/share/locale/fr/LC_MESSAGES/plasma_applet_org.chathuranga.globalmenu.mo
 
       - name: Load staged applet with plasmawindowed
         run: |

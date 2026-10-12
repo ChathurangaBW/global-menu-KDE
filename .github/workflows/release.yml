@@ -57,8 +57,8 @@ jobs:
           test -s packaging/debian/copyright
           test -s packaging/release-notes.md.in
           python -m json.tool src/metadata.json >/dev/null
-          bash -n scripts/*.sh
-          shellcheck scripts/*.sh
+          bash -n install.sh scripts/*.sh tests/*.sh
+          shellcheck install.sh scripts/*.sh tests/*.sh
           ! grep -RIn --exclude-dir=.git --exclude='release.yml' --exclude='ci.yml' 'QT_PLUGIN_PATH.*global-menu-kde.sh\|export QT_PLUGIN_PATH' .
 
       - name: Version synchronization
@@ -145,7 +145,7 @@ jobs:
         env:
           ASAN_OPTIONS: detect_leaks=0:halt_on_error=1
           UBSAN_OPTIONS: print_stacktrace=1:halt_on_error=1
-        run: ctest --test-dir build-sanitize -R appmenumodel_test --repeat until-fail:20 --output-on-failure
+        run: ctest --test-dir build-sanitize -R 'appmenumodel_test|appmenuapplet_test' --repeat until-fail:20 --output-on-failure
 
   source-archive:
     name: Reproducible source archive
@@ -208,7 +208,7 @@ jobs:
             qt6-base-dev qt6-declarative-dev \
             libkf6config-dev libkf6i18n-dev libkf6windowsystem-dev \
             libplasma-dev plasma-workspace-dev plasma-workspace \
-            dbus-daemon dbus-x11 xvfb xauth file dpkg-dev fakeroot lintian ca-certificates
+            dbus-daemon dbus-x11 xvfb xauth file dpkg-dev fakeroot lintian ca-certificates gettext
 
       - name: Install Fedora build/runtime dependencies
         if: matrix.family == 'rpm'
@@ -220,7 +220,7 @@ jobs:
             qt6-qtbase-devel qt6-qtdeclarative-devel \
             kf6-kconfig-devel kf6-kcoreaddons-devel kf6-ki18n-devel kf6-kitemmodels-devel kf6-kwindowsystem-devel \
             libplasma-devel plasma-workspace-devel plasma-workspace \
-            rpm-build rpmlint dbus-daemon xorg-x11-server-Xvfb xauth file findutils which
+            rpm-build rpmlint dbus-daemon xorg-x11-server-Xvfb xauth file findutils which gettext
 
       - uses: actions/checkout@v4
 
@@ -299,6 +299,7 @@ jobs:
           test -s /tmp/package-ldd.txt
           ! grep -q 'not found' /tmp/package-ldd.txt
           test "$ldd_status" -eq 0
+          test -s /usr/share/locale/fr/LC_MESSAGES/plasma_applet_org.chathuranga.globalmenu.mo
           if command -v kbuildsycoca6 >/dev/null 2>&1; then
             kbuildsycoca6 --noincremental || true
           fi
@@ -356,7 +357,7 @@ jobs:
           qt6-base qt6-declarative
           kconfig kcoreaddons ki18n kwindowsystem
           libplasma plasma-workspace
-          xorg-server-xvfb xorg-xauth dbus file namcap
+          xorg-server-xvfb xorg-xauth dbus file namcap gettext
 
       - uses: actions/checkout@v4
         with:
@@ -405,6 +406,7 @@ jobs:
           test -s /tmp/arch-ldd.txt
           ! grep -q 'not found' /tmp/arch-ldd.txt
           test "$ldd_status" -eq 0
+          test -s /usr/share/locale/fr/LC_MESSAGES/plasma_applet_org.chathuranga.globalmenu.mo
 
       - name: Native Arch discovery smoke with no QT_PLUGIN_PATH
         shell: bash
