@@ -11,8 +11,12 @@ class LocaleTest : public QObject
 private Q_SLOTS:
     void usesProcessLocale()
     {
-        // No setLanguages override: use exactly the language of this process.
+        // The test harness mirrors this process LANGUAGE value into KI18n.
         const bool french = qEnvironmentVariable("LANGUAGE") == QStringLiteral("fr");
+        if (french) {
+            QVERIFY(KLocalizedString::languages().contains(QStringLiteral("fr")));
+            QVERIFY(KLocalizedString::availableDomainTranslations("plasma_applet_org.chathuranga.globalmenu").contains(QStringLiteral("fr")));
+        }
         DesktopFallback fallback;
         const auto headings = fallback.menu()->actions();
         QCOMPARE(headings.size(), 7);
@@ -28,16 +32,16 @@ private Q_SLOTS:
 
 int main(int argc, char **argv)
 {
-    // Register the test-only catalog before QApplication initializes KI18n.
-    KLocalizedString::addDomainLocaleDir("plasma_applet_org.chathuranga.globalmenu", QStringLiteral(TEST_LOCALE_DIR));
     QApplication application(argc, argv);
-    // Minimal CI images often do not generate locale definitions. Mirror the
+    KLocalizedString::addDomainLocaleDir("plasma_applet_org.chathuranga.globalmenu", QStringLiteral(TEST_LOCALE_DIR));
+    // Minimal CI images do not always generate locale definitions. Mirror the
     // process LANGUAGE value explicitly so the test remains deterministic while
     // production continues to follow Plasma/KI18n's configured language list.
     const QString language = qEnvironmentVariable("LANGUAGE");
     if (!language.isEmpty()) {
         KLocalizedString::setLanguages(QStringList{language});
     }
+    KLocalizedString::setApplicationDomain("plasma_applet_org.chathuranga.globalmenu");
     LocaleTest test;
     return QTest::qExec(&test, argc, argv);
 }

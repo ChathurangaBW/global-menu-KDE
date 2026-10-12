@@ -76,7 +76,7 @@ jobs:
             deb)
               apt-get update
               DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-                git ca-certificates build-essential cmake ninja-build extra-cmake-modules gettext \
+                git ca-certificates build-essential cmake ninja-build extra-cmake-modules gettext locales \
                 qt6-base-dev qt6-declarative-dev libkf6config-dev libkf6coreaddons-dev \
                 libkf6i18n-dev libkf6windowsystem-dev libplasma-dev plasma-workspace-dev plasma-workspace \
                 dbus-daemon dbus-x11 xvfb xauth file dpkg-dev fakeroot gzip
@@ -90,7 +90,7 @@ jobs:
               fi
               dnf -y upgrade --refresh
               dnf -y install \
-                git ca-certificates gcc-c++ cmake ninja-build extra-cmake-modules gettext \
+                git ca-certificates gcc-c++ cmake ninja-build extra-cmake-modules gettext glibc-langpack-en \
                 qt6-qtbase-devel qt6-qtdeclarative-devel kf6-kconfig-devel kf6-kcoreaddons-devel \
                 kf6-ki18n-devel kf6-kitemmodels-devel kf6-kwindowsystem-devel \
                 libplasma-devel plasma-workspace-devel plasma-workspace rpm-build \
@@ -115,6 +115,10 @@ jobs:
                 libplasma plasma-workspace xorg-server-xvfb xorg-xauth dbus file
               ;;
           esac
+          if ! locale -a | grep -Eiq '^en_US[.]utf-?8$'; then
+            localedef -i en_US -f UTF-8 en_US.UTF-8
+          fi
+          locale -a | grep -Eiq '^en_US[.]utf-?8$'
 
       - uses: actions/checkout@v4
 
