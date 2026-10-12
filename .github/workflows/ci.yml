@@ -30,6 +30,15 @@ jobs:
           kconfig kcoreaddons ki18n kwindowsystem
           libplasma plasma-workspace xorg-server-xvfb dbus file
 
+      - name: Provision UTF-8 locale for KI18n runtime tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! locale -a | grep -Eiq '^en_US[.]utf-?8$'; then
+            localedef -i en_US -f UTF-8 en_US.UTF-8
+          fi
+          locale -a | grep -Eiq '^en_US[.]utf-?8$'
+
       - uses: actions/checkout@v4
 
       - name: Trust checkout directory

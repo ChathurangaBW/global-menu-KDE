@@ -114,6 +114,15 @@ jobs:
           kconfig kcoreaddons ki18n kwindowsystem
           libplasma plasma-workspace dbus
 
+      - name: Provision UTF-8 locale for KI18n runtime tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! locale -a | grep -Eiq '^en_US[.]utf-?8$'; then
+            localedef -i en_US -f UTF-8 en_US.UTF-8
+          fi
+          locale -a | grep -Eiq '^en_US[.]utf-?8$'
+
       - uses: actions/checkout@v4
 
       - name: Trust checkout directory
@@ -208,7 +217,7 @@ jobs:
             qt6-base-dev qt6-declarative-dev \
             libkf6config-dev libkf6i18n-dev libkf6windowsystem-dev \
             libplasma-dev plasma-workspace-dev plasma-workspace \
-            dbus-daemon dbus-x11 xvfb xauth file dpkg-dev fakeroot lintian ca-certificates gettext
+            dbus-daemon dbus-x11 xvfb xauth file dpkg-dev fakeroot lintian ca-certificates gettext locales
 
       - name: Install Fedora build/runtime dependencies
         if: matrix.family == 'rpm'
@@ -220,7 +229,16 @@ jobs:
             qt6-qtbase-devel qt6-qtdeclarative-devel \
             kf6-kconfig-devel kf6-kcoreaddons-devel kf6-ki18n-devel kf6-kitemmodels-devel kf6-kwindowsystem-devel \
             libplasma-devel plasma-workspace-devel plasma-workspace \
-            rpm-build rpmlint dbus-daemon xorg-x11-server-Xvfb xauth file findutils which gettext
+            rpm-build rpmlint dbus-daemon xorg-x11-server-Xvfb xauth file findutils which gettext glibc-langpack-en
+
+      - name: Provision UTF-8 locale for KI18n runtime tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! locale -a | grep -Eiq '^en_US[.]utf-?8$'; then
+            localedef -i en_US -f UTF-8 en_US.UTF-8
+          fi
+          locale -a | grep -Eiq '^en_US[.]utf-?8$'
 
       - uses: actions/checkout@v4
 
@@ -358,6 +376,15 @@ jobs:
           kconfig kcoreaddons ki18n kwindowsystem
           libplasma plasma-workspace
           xorg-server-xvfb xorg-xauth dbus file namcap gettext
+
+      - name: Provision UTF-8 locale for package tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! locale -a | grep -Eiq '^en_US[.]utf-?8$'; then
+            localedef -i en_US -f UTF-8 en_US.UTF-8
+          fi
+          locale -a | grep -Eiq '^en_US[.]utf-?8$'
 
       - uses: actions/checkout@v4
         with:
