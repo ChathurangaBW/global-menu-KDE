@@ -28,10 +28,16 @@ private Q_SLOTS:
 
 int main(int argc, char **argv)
 {
-    // Register the test-only catalog before QApplication initializes KI18n from
-    // the process locale. This keeps the test independent of system catalogs.
+    // Register the test-only catalog before QApplication initializes KI18n.
     KLocalizedString::addDomainLocaleDir("plasma_applet_org.chathuranga.globalmenu", QStringLiteral(TEST_LOCALE_DIR));
     QApplication application(argc, argv);
+    // Minimal CI images often do not generate locale definitions. Mirror the
+    // process LANGUAGE value explicitly so the test remains deterministic while
+    // production continues to follow Plasma/KI18n's configured language list.
+    const QString language = qEnvironmentVariable("LANGUAGE");
+    if (!language.isEmpty()) {
+        KLocalizedString::setLanguages(QStringList{language});
+    }
     LocaleTest test;
     return QTest::qExec(&test, argc, argv);
 }
